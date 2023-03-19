@@ -25,10 +25,8 @@ impl<'a> TryFrom<&'a str> for PokerHand<'a> {
     type Error = String;
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        let cards: Result<Vec<Card>, <Card as TryFrom<&str>>::Error> = value
-            .split_whitespace()
-            .map(|card| Ok(Card::try_from(card)?))
-            .collect();
+        let cards: Result<Vec<Card>, <Card as TryFrom<&str>>::Error> =
+            value.split_whitespace().map(Card::try_from).collect();
 
         match cards {
             Ok(mut general_hand) => {
@@ -38,9 +36,7 @@ impl<'a> TryFrom<&'a str> for PokerHand<'a> {
                     general_hand.sort();
                     if PokerHand::is_low_ace(&general_hand) {
                         general_hand[4].rank = CardRanks::LowA;
-                        let buf = general_hand[0];
-                        general_hand[0] = general_hand[4];
-                        general_hand[4] = buf;
+                        general_hand.swap(0, 4);
                     }
                     let poker_hand = PokerHand::prepare_for_poker(&mut general_hand);
                     let mut hand = Self {
@@ -59,41 +55,43 @@ impl<'a> TryFrom<&'a str> for PokerHand<'a> {
 
 impl PartialOrd for PokerHand<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        if self.score == other.score {
-            for i in (0..self.cards.len()).rev() {
-                if self.cards[i].1.rank > other.cards[i].1.rank {
-                    return Some(Ordering::Greater);
-                } else if self.cards[i].1.rank < other.cards[i].1.rank {
-                    return Some(Ordering::Less);
+        match self.score.cmp(&other.score) {
+            Ordering::Equal => {
+                for i in (0..self.cards.len()).rev() {
+                    match self.cards[i].1.rank.cmp(&other.cards[i].1.rank) {
+                        Ordering::Greater => return Some(Ordering::Greater),
+                        Ordering::Less => return Some(Ordering::Less),
+                        Ordering::Equal => continue,
+                    }
                 }
+                Some(Ordering::Equal)
             }
-            Some(Ordering::Equal)
-        } else if self.score < other.score {
-            Some(Ordering::Less)
-        } else {
-            Some(Ordering::Greater)
+            Ordering::Less => Some(Ordering::Less),
+            Ordering::Greater => Some(Ordering::Greater),
         }
     }
 }
 
 impl PokerHand<'_> {
-    fn prepare_for_poker(gen_hand: &mut Vec<Card>) -> Vec<(usize, Card)> {
+    fn prepare_for_poker(gen_hand: &mut [Card]) -> Vec<(usize, Card)> {
         let mut poker_hand: Vec<(usize, Card)> = vec![];
 
         gen_hand.sort();
-        for i in 0..5 {
+        for curr_gen_hand in gen_hand {
             let mut is_duplicate = false;
-            for j in 0..poker_hand.len() {
-                if gen_hand[i].rank == poker_hand[j].1.rank {
-                    poker_hand[j].0 += 1;
-                    is_duplicate = true;
-                    break;
-                } else if gen_hand[i].rank < poker_hand[j].1.rank {
-                    break;
+            for curr_poker_hand in &mut poker_hand {
+                match curr_gen_hand.rank.cmp(&curr_poker_hand.1.rank) {
+                    Ordering::Equal => {
+                        curr_poker_hand.0 += 1;
+                        is_duplicate = true;
+                        break;
+                    }
+                    Ordering::Less => break,
+                    Ordering::Greater => continue,
                 }
             }
             if !is_duplicate {
-                poker_hand.push((1, gen_hand[i]));
+                poker_hand.push((1, *curr_gen_hand));
             }
         }
         poker_hand.sort_unstable_by(|a, b| a.0.cmp(&b.0));
@@ -101,16 +99,16 @@ impl PokerHand<'_> {
         poker_hand
     }
 
-    fn is_low_ace(gen_hand: &Vec<Card>) -> bool {
+    fn is_low_ace(gen_hand: &[Card]) -> bool {
         if gen_hand[4].rank != CardRanks::A || gen_hand[0].rank != CardRanks::N2 {
             false
         } else {
             let mut last_card = &gen_hand[0];
-            for i in 1..4 {
-                if last_card.rank != (gen_hand[i].rank as u8 - 1).into() {
+            for curr_gen_hand in gen_hand.iter().take(4).skip(1) {
+                if last_card.rank != (curr_gen_hand.rank as u8 - 1).into() {
                     return false;
                 }
-                last_card = &gen_hand[i];
+                last_card = curr_gen_hand;
             }
             true
         }

@@ -34,5 +34,5 @@ pub fn winning_hands<'a>(hands: &[&'a str]) -> Vec<&'a str> {
             panic!("Bad input");
         }
     }
-    return result;
+    result
 }
