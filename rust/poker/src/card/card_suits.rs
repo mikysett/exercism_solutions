@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
 pub enum CardSuits {
     Clubs,
     Diamonds,

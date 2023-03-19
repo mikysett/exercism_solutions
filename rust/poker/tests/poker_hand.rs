@@ -1,8 +1,7 @@
-use poker::PokerHand;
-use poker::Score;
-use poker::card::Card;
 use poker::card::card_ranks::CardRanks;
 use poker::card::card_suits::CardSuits;
+use poker::card::Card;
+use poker::poker_hand::*;
 
 #[test]
 fn test_poker_hand() {
@@ -10,12 +9,43 @@ fn test_poker_hand() {
         PokerHand::try_from("3S 4S 5D 6H JH"),
         Ok(PokerHand {
             cards: [
-                Card {rank: CardRanks::N3,suit: CardSuits::Spades,},
-                Card {rank: CardRanks::N4,suit: CardSuits::Spades,},
-                Card {rank: CardRanks::N5,suit: CardSuits::Diamonds,},
-                Card {rank: CardRanks::N6,suit: CardSuits::Hearts,},
-                Card {rank: CardRanks::J,suit: CardSuits::Hearts,},
-            ].to_vec(),
+                (
+                    1,
+                    Card {
+                        rank: CardRanks::N3,
+                        suit: CardSuits::Spades,
+                    }
+                ),
+                (
+                    1,
+                    Card {
+                        rank: CardRanks::N4,
+                        suit: CardSuits::Spades,
+                    }
+                ),
+                (
+                    1,
+                    Card {
+                        rank: CardRanks::N5,
+                        suit: CardSuits::Diamonds,
+                    }
+                ),
+                (
+                    1,
+                    Card {
+                        rank: CardRanks::N6,
+                        suit: CardSuits::Hearts,
+                    }
+                ),
+                (
+                    1,
+                    Card {
+                        rank: CardRanks::J,
+                        suit: CardSuits::Hearts,
+                    }
+                ),
+            ]
+            .to_vec(),
             str_ref: &"3S 4S 5D 6H JH",
             score: Score::HighCard,
         })

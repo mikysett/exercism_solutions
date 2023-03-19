@@ -1,6 +1,7 @@
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Ord, Eq)]
 pub enum CardRanks {
-    N2 = 2,
+    LowA = 1,
+    N2,
     N3,
     N4,
     N5,
@@ -54,8 +55,8 @@ impl From<u8> for CardRanks {
             4 => CardRanks::N4,
             3 => CardRanks::N3,
             2 => CardRanks::N2,
-            15..=u8::MAX => CardRanks::N2,
-            u8::MIN..=1 => CardRanks::A,
+            1 => CardRanks::LowA,
+            _ => CardRanks::A,
         }
     }
 }

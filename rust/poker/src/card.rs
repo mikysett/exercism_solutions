@@ -4,7 +4,7 @@ pub mod card_suits;
 use crate::card::card_ranks::CardRanks;
 use crate::card::card_suits::CardSuits;
 
-#[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
 pub struct Card {
     pub rank: CardRanks,
     pub suit: CardSuits,
