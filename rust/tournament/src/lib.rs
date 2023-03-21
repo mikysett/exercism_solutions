@@ -51,12 +51,9 @@ pub fn tally(match_results: &str) -> String {
         });
 
     let mut teams_score = Vec::from_iter(teams.iter());
-    teams_score.sort_unstable_by(|(a_name, a_scores), (b_name, b_scores)| {
-        match b_scores.p.cmp(&a_scores.p) {
-            Ordering::Equal => a_name.cmp(b_name),
-            other => other,
-        }
-    });
+    teams_score.sort_unstable_by(|(a_name, a_scores), (b_name, b_scores)|
+        b_scores.p.cmp(&a_scores.p).then(a_name.cmp(b_name))
+    );
 
     teams_score.iter().fold(
         "Team                           | MP |  W |  D |  L |  P".to_string(),
