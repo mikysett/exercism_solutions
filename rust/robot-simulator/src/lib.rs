@@ -1,6 +1,8 @@
 // The code below is a stub. Just enough to satisfy the compiler.
 // In order to pass the tests you can add-to or change any of this code.
 
+use Direction::*;
+
 #[derive(PartialEq, Eq, Debug)]
 pub enum Direction {
     North,
@@ -24,41 +26,38 @@ impl Robot {
 
     #[must_use]
     pub fn turn_right(self) -> Self {
-        Self::new(
-            self.pos.0,
-            self.pos.1,
-            match self.dir {
-                Direction::North => Direction::East,
-                Direction::East => Direction::South,
-                Direction::South => Direction::West,
-                Direction::West => Direction::North,
+        Self {
+            dir: match self.dir {
+                North => East,
+                East => South,
+                South => West,
+                West => North,
             },
-        )
+            ..self
+        }
     }
 
     #[must_use]
     pub fn turn_left(self) -> Self {
-        Self::new(
-            self.pos.0,
-            self.pos.1,
-            match self.dir {
-                Direction::North => Direction::West,
-                Direction::East => Direction::North,
-                Direction::South => Direction::East,
-                Direction::West => Direction::South,
+        Self {
+            dir: match self.dir {
+                North => West,
+                East => North,
+                South => East,
+                West => South,
             },
-        )
+            ..self
+        }
     }
 
     #[must_use]
     pub fn advance(self) -> Self {
-        let new_pos = match self.dir {
-            Direction::North => (self.pos.0, self.pos.1 + 1),
-            Direction::East => (self.pos.0 + 1, self.pos.1),
-            Direction::South => (self.pos.0, self.pos.1 + -1),
-            Direction::West => (self.pos.0 - 1, self.pos.1),
-        };
-        Self::new(new_pos.0, new_pos.1, self.dir)
+        match self.dir {
+            North => Self { pos: (self.pos.0, self.pos.1 + 1), ..self },
+            East => Self { pos: (self.pos.0 + 1, self.pos.1), ..self },
+            South => Self { pos: (self.pos.0, self.pos.1 + -1), ..self },
+            West => Self { pos: (self.pos.0 - 1, self.pos.1), ..self },
+        }
     }
 
     #[must_use]
