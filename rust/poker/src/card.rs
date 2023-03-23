@@ -20,10 +20,19 @@ impl TryFrom<&str> for Card {
     type Error = String;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        if let Some(val_str) = value.rsplit_once(&['C', 'D', 'H', 'S']) {
+        if value.len() > 1 {
+            let rank_str = &value[0..value.len() - 1];
+            let suit_str = &value[value.len() - 1..value.len()];
+
             Ok(Self::new(
-                CardRanks::try_from(val_str.0)?,
-                CardSuits::try_from(value.chars().last().unwrap())?,
+                match CardRanks::try_from(rank_str) {
+                    Ok(rank) => rank,
+                    _ => return Err(format!("Invalid CardRanks: {}", rank_str)),
+                },
+                match CardSuits::try_from(suit_str) {
+                    Ok(suit) => suit,
+                    _ => return Err(format!("Invalid CardSuits: {}", suit_str)),
+                },
             ))
         } else {
             Err(format!("Invalid Card: {}", value))
@@ -57,12 +66,12 @@ fn test_card() {
     assert_eq!(Card::try_from(""), Err("Invalid Card: ".to_string()));
     assert_eq!(
         Card::try_from("ASS"),
-        Err("Invalid CardValue: AS".to_string())
+        Err("Invalid CardRanks: AS".to_string())
     );
     assert_eq!(Card::try_from("A"), Err("Invalid Card: A".to_string()));
-    assert_eq!(Card::try_from("10"), Err("Invalid Card: 10".to_string()));
+    assert_eq!(Card::try_from("10"), Err("Invalid CardRanks: 1".to_string()));
     assert_eq!(
         Card::try_from("1C"),
-        Err("Invalid CardValue: 1".to_string())
+        Err("Invalid CardRanks: 1".to_string())
     );
 }

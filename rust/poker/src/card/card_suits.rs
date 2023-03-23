@@ -1,21 +1,13 @@
-#[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
+use strum_macros::EnumString;
+
+#[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy, EnumString)]
 pub enum CardSuits {
+    #[strum(serialize = "C")]
     Clubs,
+    #[strum(serialize = "D")]
     Diamonds,
+    #[strum(serialize = "H")]
     Hearts,
+    #[strum(serialize = "S")]
     Spades,
-}
-
-impl TryFrom<char> for CardSuits {
-    type Error = String;
-
-    fn try_from(value: char) -> Result<Self, Self::Error> {
-        match value {
-            'C' => Ok(CardSuits::Clubs),
-            'D' => Ok(CardSuits::Diamonds),
-            'H' => Ok(CardSuits::Hearts),
-            'S' => Ok(CardSuits::Spades),
-            _ => Err(format!("Invalid CardSuit: {}", value)),
-        }
-    }
 }
