@@ -10,15 +10,21 @@ pub struct Card {
     pub suit: CardSuits,
 }
 
+impl Card {
+    fn new(rank: CardRanks, suit: CardSuits) -> Self {
+        Self { rank, suit }
+    }
+}
+
 impl TryFrom<&str> for Card {
     type Error = String;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         if let Some(val_str) = value.rsplit_once(&['C', 'D', 'H', 'S']) {
-            Ok(Self {
-                rank: CardRanks::try_from(val_str.0)?,
-                suit: CardSuits::try_from(value.chars().last().unwrap())?,
-            })
+            Ok(Self::new(
+                CardRanks::try_from(val_str.0)?,
+                CardSuits::try_from(value.chars().last().unwrap())?,
+            ))
         } else {
             Err(format!("Invalid Card: {}", value))
         }

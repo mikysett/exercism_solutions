@@ -1,4 +1,5 @@
 use crate::card::{card_ranks::CardRanks, *};
+use int_enum::IntEnum;
 use std::cmp::Ordering;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
@@ -105,7 +106,7 @@ impl PokerHand<'_> {
         } else {
             let mut last_card = &gen_hand[0];
             for curr_gen_hand in gen_hand.iter().take(4).skip(1) {
-                if last_card.rank != (curr_gen_hand.rank as u8 - 1).into() {
+                if last_card.rank.int_value() != curr_gen_hand.rank.int_value() - 1 {
                     return false;
                 }
                 last_card = curr_gen_hand;
@@ -158,7 +159,7 @@ impl PokerHand<'_> {
 
         let mut last_card = &self.cards[0].1;
         for i in 1..5 {
-            if last_card.rank != (self.cards[i].1.rank as u8 - 1).into() {
+            if last_card.rank.int_value() != self.cards[i].1.rank.int_value() - 1 {
                 return false;
             }
             last_card = &self.cards[i].1;
