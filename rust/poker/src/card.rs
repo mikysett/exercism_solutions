@@ -69,7 +69,10 @@ fn test_card() {
         Err("Invalid CardRanks: AS".to_string())
     );
     assert_eq!(Card::try_from("A"), Err("Invalid Card: A".to_string()));
-    assert_eq!(Card::try_from("10"), Err("Invalid CardRanks: 1".to_string()));
+    assert_eq!(
+        Card::try_from("10"),
+        Err("Invalid CardRanks: 1".to_string())
+    );
     assert_eq!(
         Card::try_from("1C"),
         Err("Invalid CardRanks: 1".to_string())
