@@ -35,7 +35,7 @@ impl<'a> TryFrom<&'a str> for PokerHand<'a> {
                 } else {
                     general_hand.sort();
                     if PokerHand::is_low_ace(&general_hand) {
-                        general_hand[4].rank = CardRanks(1);
+                        general_hand[4].rank = CardRanks::new(1);
                         general_hand.swap(0, 4);
                     }
                     let poker_hand = PokerHand::prepare_for_poker(&mut general_hand);
@@ -100,7 +100,7 @@ impl PokerHand<'_> {
     }
 
     fn is_low_ace(gen_hand: &[Card]) -> bool {
-        if gen_hand[4].rank != CardRanks(14) || gen_hand[0].rank != CardRanks(2) {
+        if gen_hand[4].rank != CardRanks::new(14) || gen_hand[0].rank != CardRanks::new(2) {
             false
         } else {
             let mut last_card = &gen_hand[0];

@@ -12,35 +12,35 @@ fn test_poker_hand() {
                 (
                     1,
                     Card {
-                        rank: CardRanks(3),
+                        rank: CardRanks::new(3),
                         suit: CardSuits::Spades,
                     }
                 ),
                 (
                     1,
                     Card {
-                        rank: CardRanks(4),
+                        rank: CardRanks::new(4),
                         suit: CardSuits::Spades,
                     }
                 ),
                 (
                     1,
                     Card {
-                        rank: CardRanks(5),
+                        rank: CardRanks::new(5),
                         suit: CardSuits::Diamonds,
                     }
                 ),
                 (
                     1,
                     Card {
-                        rank: CardRanks(6),
+                        rank: CardRanks::new(6),
                         suit: CardSuits::Hearts,
                     }
                 ),
                 (
                     1,
                     Card {
-                        rank: CardRanks(11),
+                        rank: CardRanks::new(11),
                         suit: CardSuits::Hearts,
                     }
                 ),

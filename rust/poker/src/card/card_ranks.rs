@@ -1,11 +1,17 @@
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Ord, Eq)]
-pub struct CardRanks(pub u32);
+pub struct CardRanks(u32);
 
 impl std::ops::Deref for CardRanks {
     type Target = u32;
-    
+
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl CardRanks {
+    pub fn new(rank: u32) -> Self {
+        Self(rank)
     }
 }
 

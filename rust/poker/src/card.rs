@@ -30,21 +30,21 @@ fn test_card() {
     assert_eq!(
         Card::try_from("AS"),
         Ok(Card {
-            rank: CardRanks(14),
+            rank: CardRanks::new(14),
             suit: CardSuits::Spades
         })
     );
     assert_eq!(
         Card::try_from("10C"),
         Ok(Card {
-            rank: CardRanks(10),
+            rank: CardRanks::new(10),
             suit: CardSuits::Clubs
         })
     );
     assert_eq!(
         Card::try_from("QD"),
         Ok(Card {
-            rank: CardRanks(12),
+            rank: CardRanks::new(12),
             suit: CardSuits::Diamonds
         })
     );
