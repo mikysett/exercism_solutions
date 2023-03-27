@@ -1,5 +1,4 @@
 use crate::card::{card_ranks::CardRanks, *};
-use int_enum::IntEnum;
 use std::cmp::Ordering;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
@@ -36,7 +35,7 @@ impl<'a> TryFrom<&'a str> for PokerHand<'a> {
                 } else {
                     general_hand.sort();
                     if PokerHand::is_low_ace(&general_hand) {
-                        general_hand[4].rank = CardRanks::LowA;
+                        general_hand[4].rank = CardRanks(1);
                         general_hand.swap(0, 4);
                     }
                     let poker_hand = PokerHand::prepare_for_poker(&mut general_hand);
@@ -101,12 +100,12 @@ impl PokerHand<'_> {
     }
 
     fn is_low_ace(gen_hand: &[Card]) -> bool {
-        if gen_hand[4].rank != CardRanks::A || gen_hand[0].rank != CardRanks::N2 {
+        if gen_hand[4].rank != CardRanks(14) || gen_hand[0].rank != CardRanks(2) {
             false
         } else {
             let mut last_card = &gen_hand[0];
             for curr_gen_hand in gen_hand.iter().take(4).skip(1) {
-                if last_card.rank.int_value() != curr_gen_hand.rank.int_value() - 1 {
+                if *last_card.rank != *curr_gen_hand.rank - 1 {
                     return false;
                 }
                 last_card = curr_gen_hand;
@@ -159,7 +158,7 @@ impl PokerHand<'_> {
 
         let mut last_card = &self.cards[0].1;
         for i in 1..5 {
-            if last_card.rank.int_value() != self.cards[i].1.rank.int_value() - 1 {
+            if *last_card.rank != *self.cards[i].1.rank - 1 {
                 return false;
             }
             last_card = &self.cards[i].1;
