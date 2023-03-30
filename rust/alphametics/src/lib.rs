@@ -9,22 +9,23 @@ pub fn solve(input: &str) -> Option<HashMap<char, u8>> {
     let mut letters = input
         .chars()
         .filter(|c| c.is_alphabetic())
-        .map(|c| (c, (None, true))) // The letter, the numeric value and "is_zero_allowed"
+        .map(|c| (c, (None, true)))
         .collect::<HashMap<char, (Option<u8>, bool)>>();
 
-    numbers
-        .iter()
-        .for_each(|number| letters.get_mut(&number.chars().next().unwrap()).unwrap().1 = false);
-
-    letters.get_mut(&result.chars().next().unwrap()).unwrap().1 = false;
+    input.split(' ').for_each(|word| {
+        let first_letter = word.chars().next().unwrap();
+        if first_letter.is_alphabetic() {
+            letters.get_mut(&first_letter).unwrap().1 = false;
+        }
+    });
 
     solve_sgl_char(&letters, &POSSIBLE_DIGITS, &numbers, result)
 }
 
 fn solve_sgl_char(
     letters: &HashMap<char, (Option<u8>, bool)>,
-    available_val: &[u8],
-    numbers: &Vec<&str>,
+    poss_digits: &[u8],
+    numbers: &[&str],
     result: &str,
 ) -> Option<HashMap<char, u8>> {
     let curr_letter = match letters
@@ -33,7 +34,7 @@ fn solve_sgl_char(
         .take(1)
         .next()
     {
-        Some((key, _val)) => key,
+        Some((key, _)) => key,
         None => {
             if is_solution_valid(numbers, result, letters) {
                 return Some(
@@ -51,23 +52,22 @@ fn solve_sgl_char(
     let mut new_unique_c = letters.clone();
     let letter_val = new_unique_c.get_mut(curr_letter).unwrap();
 
-    let skip_invalid_zero = if available_val.contains(&0) && !letter_val.1 {
+    let skip_invalid_zero = if poss_digits.contains(&0) && !letter_val.1 {
         1
     } else {
         0
     };
 
-    for try_nb in available_val.iter().skip(skip_invalid_zero) {
-        let letter_val = new_unique_c.get_mut(curr_letter).unwrap();
-        letter_val.0 = Some(*try_nb);
+    for try_nb in poss_digits.iter().skip(skip_invalid_zero) {
+        new_unique_c.get_mut(curr_letter).unwrap().0 = Some(*try_nb);
 
-        let new_available_val = available_val
+        let new_poss_digits = poss_digits
             .iter()
             .filter(|nb| *nb != try_nb)
             .copied()
             .collect::<Vec<u8>>();
 
-        if let Some(solution) = solve_sgl_char(&new_unique_c, &new_available_val, numbers, result) {
+        if let Some(solution) = solve_sgl_char(&new_unique_c, &new_poss_digits, numbers, result) {
             return Some(solution);
         }
     }
