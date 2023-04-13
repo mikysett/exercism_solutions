@@ -25,49 +25,46 @@ impl<'a> TryFrom<&'a str> for PokerHand<'a> {
     type Error = String;
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        let cards: Result<Vec<Card>, <Card as TryFrom<&str>>::Error> =
-            value.split_whitespace().map(Card::try_from).collect();
+        let mut general_hand = value
+            .split_whitespace()
+            .map(Card::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
 
-        match cards {
-            Ok(mut general_hand) => {
-                if general_hand.len() != 5 {
-                    Err(format!("Invalid PokerHand: {}", value))
-                } else {
-                    general_hand.sort();
-                    if PokerHand::is_low_ace(&general_hand) {
-                        general_hand[4].rank = CardRanks::new(1);
-                        general_hand.swap(0, 4);
-                    }
-                    let poker_hand = PokerHand::prepare_for_poker(&mut general_hand);
-                    let mut hand = Self {
-                        cards: poker_hand,
-                        str_ref: value,
-                        score: Score::HighCard,
-                    };
-                    hand.set_score();
-                    Ok(hand)
-                }
-            }
-            Err(msg) => Err(msg),
+        if general_hand.len() != 5 {
+            return Err(format!("Invalid PokerHand: {}", value));
         }
+
+        general_hand.sort();
+        if PokerHand::is_low_ace(&general_hand) {
+            general_hand[4].rank = CardRanks::new(1);
+            general_hand.rotate_right(1);
+        }
+        let poker_hand = PokerHand::prepare_for_poker(&mut general_hand);
+        let mut hand = Self {
+            cards: poker_hand,
+            str_ref: value,
+            score: Score::HighCard,
+        };
+        hand.set_score();
+        Ok(hand)
     }
 }
 
 impl PartialOrd for PokerHand<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match self.score.cmp(&other.score) {
-            Ordering::Equal => {
-                for i in (0..self.cards.len()).rev() {
-                    match self.cards[i].1.rank.cmp(&other.cards[i].1.rank) {
-                        Ordering::Greater => return Some(Ordering::Greater),
-                        Ordering::Less => return Some(Ordering::Less),
-                        Ordering::Equal => continue,
-                    }
-                }
-                Some(Ordering::Equal)
-            }
-            Ordering::Less => Some(Ordering::Less),
-            Ordering::Greater => Some(Ordering::Greater),
+            Ordering::Equal => Some(
+                self.cards
+                    .iter()
+                    .zip(&other.cards)
+                    .rev()
+                    .skip_while(|(l_card, r_card)| l_card.1.rank == r_card.1.rank)
+                    .take(1)
+                    .fold(Ordering::Equal, |_, (l_card, r_card)| {
+                        l_card.1.rank.cmp(&r_card.1.rank)
+                    }),
+            ),
+            other => Some(other),
         }
     }
 }
@@ -76,7 +73,6 @@ impl PokerHand<'_> {
     fn prepare_for_poker(gen_hand: &mut [Card]) -> Vec<(usize, Card)> {
         let mut poker_hand: Vec<(usize, Card)> = vec![];
 
-        gen_hand.sort();
         for curr_gen_hand in gen_hand {
             let mut is_duplicate = false;
             for curr_poker_hand in &mut poker_hand {
