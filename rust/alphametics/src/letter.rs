@@ -33,11 +33,7 @@ impl Letter {
         self.available_vals.retain(|v| *v != nb);
     }
 
-    pub fn set_possible_val(
-        input: &str,
-        numbers: &[&str],
-        letters: &mut HashMap<char, Letter>,
-    ) {
+    pub fn set_possible_val(input: &str, numbers: &[&str], letters: &mut HashMap<char, Letter>) {
         Self::set_weights(numbers, letters);
 
         input.split(' ').for_each(|word| {
@@ -95,8 +91,7 @@ impl Letter {
             .unwrap();
         if res_len >= num_max_len {
             if nb_digits(&total_max) == result.len() {
-                first_l_result.available_vals =
-                    (1..=first_digit(&total_max)).collect();
+                first_l_result.available_vals = (1..=first_digit(&total_max)).collect();
             }
         } else if res_len < num_max_len {
             first_l_result.available_vals = vec![]
