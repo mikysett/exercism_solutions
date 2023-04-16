@@ -8,23 +8,9 @@ macro_rules! new_planet {
         pub struct $planet;
 
         impl Planet for $planet {
-            fn years_during(d: &Duration) -> f64 {
-                **d / 31557600. / $orbital_period
-            }
+            const ORBITAL_PERIOD: f64 = $orbital_period;
         }
     };
-    ($planet:ident) => {
-        pub struct $planet;
-        impl Planet for $planet {}
-    };
-}
-
-impl std::ops::Deref for Duration {
-    type Target = f64;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
 }
 
 impl From<u64> for Duration {
@@ -34,14 +20,16 @@ impl From<u64> for Duration {
 }
 
 pub trait Planet {
+    const ORBITAL_PERIOD: f64;
+
     fn years_during(d: &Duration) -> f64 {
-        **d / 31557600.
+        d.0 / 31557600. / Self::ORBITAL_PERIOD
     }
 }
 
 new_planet!(Mercury, 0.2408467);
 new_planet!(Venus, 0.61519726);
-new_planet!(Earth);
+new_planet!(Earth, 1.);
 new_planet!(Mars, 1.8808158);
 new_planet!(Jupiter, 11.862615);
 new_planet!(Saturn, 29.447498);
