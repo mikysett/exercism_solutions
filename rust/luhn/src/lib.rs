@@ -3,8 +3,7 @@ pub fn is_valid(code: &str) -> bool {
     if code.trim().len() <= 1 {
         return false;
     }
-    match code
-        .as_bytes()
+    code.as_bytes()
         .iter()
         .rev()
         .filter(|&c| *c != b' ')
@@ -22,8 +21,6 @@ pub fn is_valid(code: &str) -> bool {
             } else {
                 None
             }
-        }) {
-        Some(checksum) => checksum % 10 == 0,
-        None => false,
-    }
+        })
+        .map_or(false, |checksum| checksum % 10 == 0)
 }
