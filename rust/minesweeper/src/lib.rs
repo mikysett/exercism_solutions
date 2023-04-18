@@ -15,14 +15,14 @@ pub fn annotate(minefield: &[&str]) -> Vec<String> {
             .enumerate()
             .filter(|(_, &c)| c == b'*')
             .for_each(|(x, _)| {
-                get_neighbors(x, y, x_max, y_max).iter().for_each(|(x, y)| {
-                    let curr_val = field[*y][*x];
+                get_neighbors(x, y, x_max, y_max).iter().for_each(|&(x, y)| {
+                    let curr_val = field[y][x];
 
                     if curr_val != b'*' {
                         if curr_val == b' ' {
-                            field[*y][*x] = b'1';
+                            field[y][x] = b'1';
                         } else {
-                            field[*y][*x] = curr_val + 1;
+                            field[y][x] = curr_val + 1;
                         }
                     }
                 })
@@ -53,12 +53,11 @@ fn get_neighbors(x: usize, y: usize, x_max: usize, y_max: usize) -> Vec<(usize, 
 
     possible_x
         .iter()
-        .flat_map(|curr_x| {
+        .flat_map(|&curr_x| {
             possible_y
                 .iter()
-                .map(|curr_y| (curr_x, curr_y))
-                .filter(|(&curr_x, &curr_y)| curr_x != x || curr_y != y)
-                .map(|v| (*v.0, *v.1))
+                .map(|&curr_y| (curr_x, curr_y))
+                .filter(|&(curr_x, curr_y)| curr_x != x || curr_y != y)
                 .collect::<Vec<_>>()
         })
         .collect()
