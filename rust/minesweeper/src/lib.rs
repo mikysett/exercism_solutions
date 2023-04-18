@@ -1,5 +1,16 @@
 use std::str;
 
+const OFFSET: [(i32, i32); 8] = [
+    (-1, -1),
+    (0, -1),
+    (1, -1),
+    (-1, 0),
+    (1, 0),
+    (-1, 1),
+    (0, 1),
+    (1, 1),
+];
+
 pub fn annotate(minefield: &[&str]) -> Vec<String> {
     let mut field: Vec<Vec<u8>> = minefield
         .iter()
@@ -15,50 +26,33 @@ pub fn annotate(minefield: &[&str]) -> Vec<String> {
             .enumerate()
             .filter(|(_, &c)| c == b'*')
             .for_each(|(x, _)| {
-                get_neighbors(x, y, x_max, y_max).iter().for_each(|&(x, y)| {
-                    let curr_val = field[y][x];
+                OFFSET
+                    .iter()
+                    .filter(|(x_off, y_off)| {
+                        !(*x_off == -1 && x == 0)
+                            && *x_off + (x as i32) < x_max as i32
+                            && !(*y_off == -1 && y == 0)
+                            && *y_off + (y as i32) < y_max as i32
+                    })
+                    .map(|&(x_off, y_off)| {
+                        (((x as i32) + x_off) as usize, ((y as i32) + y_off) as usize)
+                    })
+                    .for_each(|(x, y)| {
+                        let curr_val = field[y][x];
 
-                    if curr_val != b'*' {
-                        if curr_val == b' ' {
-                            field[y][x] = b'1';
-                        } else {
-                            field[y][x] = curr_val + 1;
+                        if curr_val != b'*' {
+                            if curr_val == b' ' {
+                                field[y][x] = b'1';
+                            } else {
+                                field[y][x] = curr_val + 1;
+                            }
                         }
-                    }
-                })
+                    })
             })
     });
 
     field
         .into_iter()
         .map(|line| unsafe { String::from_utf8_unchecked(line) })
-        .collect()
-}
-
-fn get_neighbors(x: usize, y: usize, x_max: usize, y_max: usize) -> Vec<(usize, usize)> {
-    let mut possible_x = vec![x];
-    let mut possible_y = vec![y];
-    if x != 0 {
-        possible_x.push(x - 1);
-    }
-    if x < x_max - 1 {
-        possible_x.push(x + 1);
-    }
-    if y != 0 {
-        possible_y.push(y - 1);
-    }
-    if y < y_max - 1 {
-        possible_y.push(y + 1);
-    }
-
-    possible_x
-        .iter()
-        .flat_map(|&curr_x| {
-            possible_y
-                .iter()
-                .map(|&curr_y| (curr_x, curr_y))
-                .filter(|&(curr_x, curr_y)| curr_x != x || curr_y != y)
-                .collect::<Vec<_>>()
-        })
         .collect()
 }
