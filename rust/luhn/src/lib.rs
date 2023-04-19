@@ -10,14 +10,13 @@ pub fn is_valid(code: &str) -> bool {
         .enumerate()
         .try_fold(0, |acc, (i, &c)| {
             if c.is_ascii_digit() {
-                Some(if i % 2 == 1 {
-                    match c - b'0' + c - b'0' {
-                        sum if sum > 9 => acc + sum - 9,
-                        other => acc + other,
-                    }
-                } else {
-                    acc + c - b'0'
-                })
+                Some(
+                    acc + match (i % 2 == 1, c - b'0') {
+                        (true, nb) if nb > 4 => nb * 2 - 9,
+                        (true, nb) => nb * 2,
+                        (false, nb) => nb,
+                    },
+                )
             } else {
                 None
             }
