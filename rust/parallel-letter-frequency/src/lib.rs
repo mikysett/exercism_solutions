@@ -7,7 +7,7 @@ pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
         let chunk_size = input.len() / worker_count + 1;
 
         input.chunks(chunk_size).for_each(|chunk| {
-            handles.push(s.spawn(move || counter(chunk)));
+            handles.push(s.spawn(|| counter(chunk)));
         });
 
         let mut freq = HashMap::new();
