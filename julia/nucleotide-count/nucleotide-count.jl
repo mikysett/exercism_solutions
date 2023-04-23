@@ -7,13 +7,10 @@ Invalid strands raise a `DomainError`.
 
 """
 function count_nucleotides(strand)
-    count = Dict('A' => 0, 'C' => 0, 'G' => 0, 'T' => 0)
+    count = Dict((n, 0) for n in "ACGT")
     for c in strand
-        if !occursin(string(c), "ACGT")
-            throw(DomainError(c))
-        else
-            count[c] += 1
-        end
+        c in "ACGT" || throw(DomainError(c))
+        count[c] += 1
     end
     count
 end
