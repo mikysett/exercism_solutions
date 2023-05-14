@@ -93,17 +93,15 @@ void list_delete(struct list *list, ll_data_t data) {
    t_list_node *curr = list->first;
    while (curr) {
       if (curr->data == data) {
-         if (curr->prev) {
+         if (curr == list->first) {
+            list_shift(list);
+         } else if (curr == list->last) {
+            list_pop(list);
+         } else {
             curr->prev->next = curr->next;
-         } else {
-            list->first = curr->next;
-         }
-         if (curr->next) {
             curr->next->prev = curr->prev;
-         } else {
-            list->last = curr->prev;
+            free(curr);
          }
-         free(curr);
          break;
       }
       curr = curr->next;
