@@ -1,17 +1,14 @@
-only_alpha([Char | CharsIn], [Char | CharsOut]) :-
-    Char @>= 'a', Char @=< 'z', !,
-    only_alpha(CharsIn, CharsOut).
-only_alpha([_ | CharsIn], CharsOut) :-
-    only_alpha(CharsIn, CharsOut).
-only_alpha([], []).
-
-isogram(Phrase):-
-    string_lower(Phrase, Lower),
+isogram(S):-
+    string_lower(S, Lower),
     string_chars(Lower, LowerChars),
-    only_alpha(LowerChars, LowerAlpha),
+    include(alpha, LowerChars, LowerAlpha),
     sort(LowerAlpha, B),
-    sort(0, @=<, LowerAlpha, C),
-    length(B, LenB),
-    length(C, LenC),
-    LenB == LenC.
+    msort(LowerAlpha, C),
+    equal_len(B, C).
     
+alpha(X):-
+    char_type(X, alnum).
+
+equal_len(A, B):-
+    length(A, X),
+    length(B, X).
