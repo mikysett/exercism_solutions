@@ -1,24 +1,27 @@
-use std::vec;
+use std::{collections::HashMap, vec};
 
 pub type Value = i32;
 pub type Result = std::result::Result<(), Error>;
 
 pub struct Forth {
     stack: Vec<Value>,
-    words: Vec<Word>,
+    words: HashMap<String, Word>,
 }
 
-type WordOp = dyn Fn(&mut Forth, &str) -> Result;
+type WordOp = fn(&mut Forth, &str) -> Result;
 
 struct Word {
     name: String,
-    op: Box<WordOp>,
+    op: WordOp,
     // expand: String,
 }
 
 impl Word {
-    fn new(name: &str, op: Box<WordOp>) -> Self {
-        Self { name: name.to_owned(), op }
+    fn new(name: &str, op: WordOp) -> Self {
+        Self {
+            name: name.to_owned(),
+            op,
+        }
     }
 }
 
@@ -27,10 +30,8 @@ const STACK_OPS: [&str; 4] = ["DUP", "DROP", "SWAP", "OVER"];
 
 enum Token {
     Number(Value),
-    Arithmetic(String),
-    StackOp(&'static str),
     WordStart,
-    WordName(String),
+    Word(String),
     WordEnd,
 }
 
@@ -44,17 +45,23 @@ pub enum Error {
 
 impl Forth {
     pub fn new() -> Forth {
-        let arithmetic_word = |op: String| {
-            Word::new(&op, Box::new(|forth: &mut Self, op: &str| Ok(forth.do_arithmetic_op(op)?)))
-        };
+        let arithmetic_word =
+            |op: String| Word::new(&op, |forth: &mut Self, op: &str| forth.do_arithmetic_op(op));
+        let builtin_word =
+            |op: String| Word::new(&op, |forth: &mut Self, op: &str| forth.do_stack_op(op));
+
+        let mut std_words = HashMap::new();
+
+        ARITHMETIC_OPS.iter().for_each(|op| {
+            std_words.insert(op.to_string(), arithmetic_word(op.to_string()));
+        });
+        STACK_OPS.iter().for_each(|op| {
+            std_words.insert(op.to_string(), builtin_word(op.to_string()));
+        });
+
         Self {
             stack: vec![],
-            words: vec![
-                arithmetic_word("+".to_string()),
-                arithmetic_word("-".to_string()),
-                arithmetic_word("*".to_string()),
-                arithmetic_word("/".to_string()),
-            ],
+            words: std_words,
         }
     }
 
@@ -63,20 +70,23 @@ impl Forth {
     }
 
     pub fn eval(&mut self, input: &str) -> Result {
-        input
-            .split_whitespace()
-            .map(|s| {
-                match Token::new(s)? {
-                    Token::Number(nb) => self.stack.push(nb),
-                    Token::Arithmetic(op) => {
-                        self.do_arithmetic_op(&op)?;
-                    }
-                    Token::StackOp(op) => self.do_stack_op(op)?,
-                    _ => unreachable!(),
+        input.split_whitespace().try_for_each(|s| {
+            let s = s.to_uppercase();
+
+            match Token::new(&s, &self.words)? {
+                Token::Number(nb) => self.stack.push(nb),
+                Token::Word(name) => {
+                    let (word_op, expanded) = self
+                        .words
+                        .get(&name)
+                        .map(|word| (word.op, word.name.to_string()))
+                        .unwrap();
+                    (word_op)(self, &expanded)?;
                 }
-                Ok(())
-            })
-            .collect()
+                _ => unreachable!(),
+            }
+            Ok(())
+        })
     }
 
     fn do_arithmetic_op(&mut self, op: &str) -> Result {
@@ -87,7 +97,7 @@ impl Forth {
             "+" => lhs + rhs,
             "-" => lhs - rhs,
             "*" => lhs * rhs,
-            "/" => lhs.checked_div(rhs).ok_or_else(|| Error::DivisionByZero)?,
+            "/" => lhs.checked_div(rhs).ok_or(Error::DivisionByZero)?,
             _ => unreachable!(),
         });
         Ok(())
@@ -110,9 +120,13 @@ impl Forth {
                 self.stack.push(lhs);
             }
             "OVER" => {
+                if self.stack.len() < 2 {
+                    return Err(Error::StackUnderflow);
+                }
+
                 let before_last = self.stack[self.stack.len() - 2];
                 self.stack.push(before_last);
-            },
+            }
             _ => unreachable!(),
         }
         Ok(())
@@ -134,18 +148,17 @@ impl Forth {
 }
 
 impl Token {
-    fn new(s: &str) -> std::result::Result<Self, Error> {
+    fn new(s: &str, words: &HashMap<String, Word>) -> std::result::Result<Self, Error> {
         if let Ok(nb) = s.parse::<Value>() {
             Ok(Token::Number(nb))
-        } else if ARITHMETIC_OPS.contains(&s) {
-            Ok(Token::Arithmetic(s.to_owned()))
-        } else if let Some(op) = STACK_OPS
-            .iter()
-            .find(|&&op| op == s.to_uppercase().as_str())
-        {
-            Ok(Token::StackOp(op))
+        } else if words.contains_key(s) {
+            Ok(Token::Word(s.to_owned()))
+        } else if s == ":" {
+            Ok(Token::WordStart)
+        } else if s == ";" {
+            Ok(Token::WordEnd)
         } else {
-            Err(Error::InvalidWord)
+            Err(Error::UnknownWord)
         }
     }
 }
