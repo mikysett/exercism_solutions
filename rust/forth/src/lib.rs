@@ -5,60 +5,66 @@ pub type Result = std::result::Result<(), Error>;
 
 pub struct Forth {
     stack: Vec<Value>,
-    words: HashMap<String, Word>,
+    words: Vec<Word>,
 }
 
 type WordOp = fn(&mut Forth, &str) -> Result;
 
 struct Word {
+    head: String,
+    tail: String,
     op: WordOp,
-    expand: String,
 }
 
 impl Word {
-    fn new_std(expand: &str, op: WordOp) -> Self {
+    fn new_std(name: &str, op: WordOp) -> Self {
         Self {
+            head: name.to_owned(),
+            tail: name.to_owned(),
             op,
-            expand: expand.to_owned(),
         }
     }
 
     fn new(
-        words: &HashMap<String, Word>,
+        words: &[Word],
         tokens: &mut impl Iterator<Item = String>,
-    ) -> std::result::Result<(String, Self), Error> {
+    ) -> std::result::Result<Self, Error> {
         let name = tokens.next().ok_or(Error::InvalidWord)?;
 
         if !Word::is_valid_name(&name) {
             return Err(Error::InvalidWord);
         }
 
-        let mut expand = String::new();
+        let mut tail = String::new();
         for t in tokens.by_ref() {
             match Token::new(&t, words)? {
                 Token::WordEnd => {
                     return {
-                        Ok((
-                            name,
+                        Ok(
                             Self {
+                                head: name,
+                                tail,
                                 op: Forth::eval,
-                                expand,
                             },
-                        ))
+                        )
                     }
                 }
                 Token::WordStart => return Err(Error::InvalidWord),
                 Token::Word(found_expand) => {
-                    expand.push(' ');
-                    expand.push_str(&found_expand);
+                    tail.push(' ');
+                    tail.push_str(&found_expand);
                 }
                 Token::Number(_) => {
-                    expand.push(' ');
-                    expand.push_str(&t);
+                    tail.push(' ');
+                    tail.push_str(&t);
                 }
             }
         }
         Err(Error::InvalidWord)
+    }
+
+    fn get<'a>(words: &'a [Word], name: &'a str) -> Option<&'a Word> {
+        words.iter().rev().find(|word| word.head == name)
     }
 
     fn is_valid_name(s: &str) -> bool {
@@ -92,13 +98,13 @@ impl Forth {
         let builtin_word =
             |op: String| Word::new_std(&op, |forth: &mut Self, op: &str| forth.do_stack_op(op));
 
-        let mut std_words = HashMap::new();
+        let mut std_words = vec![];
 
         ARITHMETIC_OPS.iter().for_each(|op| {
-            std_words.insert(op.to_string(), arithmetic_word(op.to_string()));
+            std_words.push(arithmetic_word(op.to_string()));
         });
         STACK_OPS.iter().for_each(|op| {
-            std_words.insert(op.to_string(), builtin_word(op.to_string()));
+            std_words.push(builtin_word(op.to_string()));
         });
 
         Self {
@@ -118,17 +124,16 @@ impl Forth {
             match Token::new(&token, &self.words)? {
                 Token::Number(nb) => self.stack.push(nb),
                 Token::Word(_) => {
-                    match self
-                        .get_word(&token)
-                        .map(|word| (word.op, word.expand.to_string()))
+                    match Word::get(&self.words, &token)
+                        .map(|word| (word.op, word.tail.to_string()))
                     {
                         Some((op, expand)) => (op)(self, &expand)?,
                         None => return Err(Error::UnknownWord),
                     }
                 }
                 Token::WordStart => {
-                    let (name, new_word) = Word::new(self.get_words(), &mut tokens)?;
-                    self.add_word(name, new_word);
+                    let new_word = Word::new(self.get_words(), &mut tokens)?;
+                    self.add_word(new_word);
                 }
                 _ => unreachable!(),
             }
@@ -193,25 +198,21 @@ impl Forth {
         }
     }
 
-    fn get_words(&self) -> &HashMap<String, Word> {
+    fn get_words(&self) -> &[Word] {
         &self.words
     }
 
-    fn get_word(&self, name: &str) -> Option<&Word> {
-        self.words.get(name)
-    }
-
-    fn add_word(&mut self, name: String, new_word: Word) {
-        self.words.insert(name, new_word);
+    fn add_word(&mut self, new_word: Word) {
+        self.words.push(new_word);
     }
 }
 
 impl Token {
-    fn new(s: &str, words: &HashMap<String, Word>) -> std::result::Result<Self, Error> {
+    fn new(s: &str, words: &[Word]) -> std::result::Result<Self, Error> {
         if let Ok(nb) = s.parse::<Value>() {
             Ok(Token::Number(nb))
-        } else if let Some(word) = words.get(s) {
-            Ok(Token::Word(word.expand.to_owned()))
+        } else if let Some(word) = Word::get(words, s) {
+            Ok(Token::Word(word.tail.to_owned()))
         } else if s == ":" {
             Ok(Token::WordStart)
         } else if s == ";" {
@@ -222,8 +223,8 @@ impl Token {
     }
 }
 
-fn print_words(words: &HashMap<String, Word>) {
-    for (name, word) in words {
-        println!("{}: {}", name, word.expand);
+fn print_words(words: &[Word]) {
+    for word in words {
+        println!("{}: {}", word.head, word.tail);
     }
 }
