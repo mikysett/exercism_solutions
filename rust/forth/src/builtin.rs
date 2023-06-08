@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::word::Word;
 use crate::Error;
 use crate::Forth;
@@ -6,20 +8,26 @@ use crate::Result;
 const ARITHMETIC_OPS: [&str; 4] = ["+", "-", "*", "/"];
 const STACK_OPS: [&str; 4] = ["DUP", "DROP", "SWAP", "OVER"];
 
-pub fn make_builtin_words() -> Vec<Word> {
-    let arithmetic_word = |op: String| Word::new_std(&op, do_arithmetic_op);
-    let builtin_word = |op: String| Word::new_std(&op, do_stack_op);
+pub fn make_builtin_words() -> (HashMap<usize, Word>, HashMap<String, usize>) {
+    let mut words = HashMap::new();
+    let mut words_table = HashMap::new();
 
-    let mut std_words = vec![];
+    let mut add_word = |name: &str, call| {
+        let id = words.len();
+        let new_word = Word::new_std(name, call);
 
-    ARITHMETIC_OPS.iter().for_each(|op| {
-        std_words.push(arithmetic_word(op.to_string()));
+        words.insert(id, new_word);
+        words_table.insert(name.to_owned(), id);
+    };
+
+    ARITHMETIC_OPS.iter().for_each(|name| {
+        add_word(name, do_arithmetic_op);
     });
-    STACK_OPS.iter().for_each(|op| {
-        std_words.push(builtin_word(op.to_string()));
+    STACK_OPS.iter().for_each(|name| {
+        add_word(name, do_stack_op);
     });
 
-    std_words
+    (words, words_table)
 }
 
 fn do_arithmetic_op(forth: &mut Forth, op: &str) -> Result {

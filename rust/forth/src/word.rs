@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::Error;
 use crate::Forth;
 use crate::Result;
@@ -7,8 +9,7 @@ pub type WordOp = fn(&'_ mut Forth, &str) -> Result;
 
 #[derive(Clone)]
 pub struct Word {
-    pub head: String,
-    pub tail: String,
+    pub tail: Vec<Token>,
     pub op: WordOp,
     pub expanded: Option<String>,
 }
@@ -16,55 +17,55 @@ pub struct Word {
 impl Word {
     pub fn new_std(name: &str, op: WordOp) -> Self {
         Self {
-            head: name.to_owned(),
-            tail: name.to_owned(),
-            op,
+            tail: vec![],
             expanded: Some(name.to_owned()),
+            op,
         }
     }
 
     pub fn new(
-        words: &[Word],
+        words_table: &HashMap<String, usize>,
         tokens: &mut impl Iterator<Item = String>,
-    ) -> std::result::Result<Self, Error> {
+    ) -> std::result::Result<(String, Self), Error> {
         let head = tokens.next().ok_or(Error::InvalidWord)?;
 
         if !Word::is_valid_name(&head) {
             return Err(Error::InvalidWord);
         }
 
-        let mut tail = String::new();
+        let mut tail = vec![];
         for t in tokens.by_ref() {
-            match Token::new(&t, words)? {
+            match Token::new(&t, words_table)? {
                 Token::WordStart => return Err(Error::InvalidWord),
                 Token::WordEnd => {
-                    return Ok(Self {
+                    return Ok((
                         head,
-                        tail,
-                        op: Forth::eval,
-                        expanded: None,
-                    });
+                        Self {
+                            tail,
+                            op: Forth::eval,
+                            expanded: None,
+                        },
+                    ));
                 }
-                _ => {
-                    tail.push(' ');
-                    tail.push_str(&t);
+                other => {
+                    tail.push(other);
                 }
             }
         }
         Err(Error::InvalidWord)
     }
 
-    pub fn get<'a>(words: &'a [Word], name: &str) -> Option<&'a Word> {
-        words.iter().rev().find(|word| word.head == name)
+    pub fn get_id<'a>(words_table: &'a HashMap<String, usize>, name: &str) -> Option<&'a usize> {
+        words_table.get(name)
     }
 
-    pub fn get_copy_with_index(words: &[Word], name: &str) -> Option<(usize, Word)> {
-        words
-            .iter()
-            .enumerate()
-            .rfind(|(_, word)| word.head == name)
-            .map(|(i, word)| (i, word.clone()))
-    }
+    // pub fn get_copy_with_index(words: &[Word], name: &str) -> Option<(usize, Word)> {
+    //     words
+    //         .iter()
+    //         .enumerate()
+    //         .rfind(|(_, word)| word.head == name)
+    //         .map(|(i, word)| (i, word.clone()))
+    // }
 
     fn is_valid_name(s: &str) -> bool {
         !(s.chars().all(|c| c.is_numeric()) || s == ";" || s == ":")

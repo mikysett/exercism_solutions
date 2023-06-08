@@ -1,4 +1,4 @@
-use std::vec;
+use std::{collections::HashMap, vec};
 
 mod builtin;
 mod token;
@@ -13,8 +13,8 @@ pub type Result = std::result::Result<(), Error>;
 
 pub struct Forth {
     stack: Vec<Value>,
-    words: Vec<Word>,
-    last_word: usize,
+    words: HashMap<usize, Word>,
+    words_table: HashMap<String, usize>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -27,12 +27,12 @@ pub enum Error {
 
 impl Forth {
     pub fn new() -> Forth {
-        let builtin_words = make_builtin_words();
+        let (words, words_table) = make_builtin_words();
 
         Self {
             stack: vec![],
-            last_word: builtin_words.len(),
-            words: builtin_words,
+            words,
+            words_table,
         }
     }
 
@@ -44,25 +44,17 @@ impl Forth {
         let mut tokens = input.split_whitespace().map(|el| el.to_uppercase());
 
         while let Some(token) = tokens.next() {
-            match Token::new(&token, &self.words)? {
+            match Token::new(&token, &self.words_table)? {
                 Token::Number(nb) => self.stack.push(nb),
-                Token::Word => {
-                    match Word::get_copy_with_index(&self.words[0..self.last_word], &token) {
-                        Some((i, word)) => {
-                            let original_last = self.last_word;
+                Token::Word(id) => {
+                    let word = self.expand_word(id);
 
-                            self.last_word = i;
-                            let result = (word.op)(self, &word.tail);
-                            self.last_word = original_last;
-
-                            result?;
-                        }
-                        None => return Err(Error::UnknownWord),
-                    }
+                    let exp = word.expanded.unwrap();
+                    (word.op)(self, &exp)?;
                 }
                 Token::WordStart => {
-                    let new_word = Word::new(self.get_words(), &mut tokens)?;
-                    self.add_word(new_word);
+                    let (name, new_word) = Word::new(self.get_words_table(), &mut tokens)?;
+                    self.add_word(&name, new_word);
                 }
                 _ => unreachable!(),
             }
@@ -70,17 +62,65 @@ impl Forth {
         Ok(())
     }
 
-    fn expand_word(&mut self, index: usize) -> String {
-        unimplemented!()
+    fn expand_word(&mut self, id: usize) -> Word {
+        let word = self.get_word(id).unwrap().clone();
+
+        match word.expanded.is_some() {
+            true => word,
+            false => {
+                let expand = self.make_expand(&word.tail);
+
+                let word = self.get_mut_word(id).unwrap();
+                word.expanded = Some(expand);
+
+                word.clone()
+            }
+        }
     }
 
-    fn get_words(&self) -> &[Word] {
-        &self.words
+    fn make_expand(&mut self, tail: &[Token]) -> String {
+        let mut result = String::new();
+
+        for token in tail {
+            match token {
+                Token::Number(nb) => {
+                    result.push(' ');
+                    result.push_str(&nb.to_string());
+                }
+                Token::Word(id) => {
+                    let word = self.get_word(*id).unwrap().clone();
+
+                    let expanded = word
+                        .expanded
+                        .unwrap_or(self.expand_word(*id).expanded.unwrap());
+
+                    result.push(' ');
+                    result.push_str(&expanded);
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        result
     }
 
-    fn add_word(&mut self, new_word: Word) {
-        self.words.push(new_word);
-        self.last_word += 1;
+    fn get_words_table(&self) -> &HashMap<String, usize> {
+        &self.words_table
+    }
+
+    fn add_word(&mut self, name: &str, new_word: Word) {
+        let id = self.words.len();
+
+        self.words_table.insert(name.to_owned(), id);
+        self.words.insert(id, new_word);
+    }
+
+    pub fn get_word(&mut self, id: usize) -> Option<&Word> {
+        self.words.get(&id)
+    }
+
+    pub fn get_mut_word(&mut self, id: usize) -> Option<&mut Word> {
+        self.words.get_mut(&id)
     }
 
     fn stack_pop(&mut self) -> std::result::Result<Value, Error> {
