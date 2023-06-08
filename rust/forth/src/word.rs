@@ -59,14 +59,6 @@ impl Word {
         words_table.get(name)
     }
 
-    // pub fn get_copy_with_index(words: &[Word], name: &str) -> Option<(usize, Word)> {
-    //     words
-    //         .iter()
-    //         .enumerate()
-    //         .rfind(|(_, word)| word.head == name)
-    //         .map(|(i, word)| (i, word.clone()))
-    // }
-
     fn is_valid_name(s: &str) -> bool {
         !(s.chars().all(|c| c.is_numeric()) || s == ";" || s == ":")
     }
