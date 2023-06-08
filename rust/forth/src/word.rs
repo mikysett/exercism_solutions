@@ -3,13 +3,14 @@ use crate::Forth;
 use crate::Result;
 use crate::Token;
 
-pub type WordOp = fn(&mut Forth, &str) -> Result;
+pub type WordOp = fn(&'_ mut Forth, &str) -> Result;
 
 #[derive(Clone)]
 pub struct Word {
     pub head: String,
     pub tail: String,
     pub op: WordOp,
+    pub expanded: Option<String>,
 }
 
 impl Word {
@@ -18,6 +19,7 @@ impl Word {
             head: name.to_owned(),
             tail: name.to_owned(),
             op,
+            expanded: Some(name.to_owned()),
         }
     }
 
@@ -40,6 +42,7 @@ impl Word {
                         head,
                         tail,
                         op: Forth::eval,
+                        expanded: None,
                     });
                 }
                 _ => {

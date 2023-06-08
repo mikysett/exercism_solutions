@@ -1,7 +1,10 @@
 use std::vec;
 
+mod builtin;
 mod token;
 mod word;
+
+use builtin::make_builtin_words;
 use token::Token;
 use word::Word;
 
@@ -13,9 +16,6 @@ pub struct Forth {
     words: Vec<Word>,
 }
 
-const ARITHMETIC_OPS: [&str; 4] = ["+", "-", "*", "/"];
-const STACK_OPS: [&str; 4] = ["DUP", "DROP", "SWAP", "OVER"];
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     DivisionByZero,
@@ -26,24 +26,9 @@ pub enum Error {
 
 impl Forth {
     pub fn new() -> Forth {
-        let arithmetic_word = |op: String| {
-            Word::new_std(&op, |forth: &mut Self, op: &str| forth.do_arithmetic_op(op))
-        };
-        let builtin_word =
-            |op: String| Word::new_std(&op, |forth: &mut Self, op: &str| forth.do_stack_op(op));
-
-        let mut std_words = vec![];
-
-        ARITHMETIC_OPS.iter().for_each(|op| {
-            std_words.push(arithmetic_word(op.to_string()));
-        });
-        STACK_OPS.iter().for_each(|op| {
-            std_words.push(builtin_word(op.to_string()));
-        });
-
         Self {
             stack: vec![],
-            words: std_words,
+            words: make_builtin_words(),
         }
     }
 
@@ -59,6 +44,10 @@ impl Forth {
                 Token::Number(nb) => self.stack.push(nb),
                 Token::Word => match Word::get_copy_with_index(&self.words, &token) {
                     Some((i, word)) => {
+                        // if word.expanded.is_none() {
+                        //     word.expand()?;
+                        // }
+
                         let original_words = self.words.clone();
                         self.words = self.words[0..i].to_owned();
 
@@ -79,47 +68,16 @@ impl Forth {
         Ok(())
     }
 
-    fn do_arithmetic_op(&mut self, op: &str) -> Result {
-        let rhs = self.stack_pop()?;
-        let lhs = self.stack_pop()?;
-
-        self.stack.push(match op {
-            "+" => lhs + rhs,
-            "-" => lhs - rhs,
-            "*" => lhs * rhs,
-            "/" => lhs.checked_div(rhs).ok_or(Error::DivisionByZero)?,
-            _ => unreachable!(),
-        });
-        Ok(())
+    fn expand_word(&mut self, index: usize) -> String {
+        unimplemented!()
     }
 
-    fn do_stack_op(&mut self, op: &str) -> Result {
-        match op {
-            "DUP" => {
-                let last = self.stack_last()?;
-                self.stack.push(last);
-            }
-            "DROP" => {
-                self.stack_pop()?;
-            }
-            "SWAP" => {
-                let rhs = self.stack_pop()?;
-                let lhs = self.stack_pop()?;
+    fn get_words(&self) -> &[Word] {
+        &self.words
+    }
 
-                self.stack.push(rhs);
-                self.stack.push(lhs);
-            }
-            "OVER" => {
-                if self.stack.len() < 2 {
-                    return Err(Error::StackUnderflow);
-                }
-
-                let before_last = self.stack[self.stack.len() - 2];
-                self.stack.push(before_last);
-            }
-            _ => unreachable!(),
-        }
-        Ok(())
+    fn add_word(&mut self, new_word: Word) {
+        self.words.push(new_word);
     }
 
     fn stack_pop(&mut self) -> std::result::Result<Value, Error> {
@@ -134,13 +92,5 @@ impl Forth {
             Some(el) => Ok(*el),
             None => Err(Error::StackUnderflow),
         }
-    }
-
-    fn get_words(&self) -> &[Word] {
-        &self.words
-    }
-
-    fn add_word(&mut self, new_word: Word) {
-        self.words.push(new_word);
     }
 }
