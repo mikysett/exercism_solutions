@@ -54,7 +54,7 @@ impl Word {
         Err(Error::InvalidWord)
     }
 
-    pub fn get<'a>(words: &'a [Word], name: &'a str) -> Option<&'a Word> {
+    pub fn get<'a>(words: &'a [Word], name: &str) -> Option<&'a Word> {
         words.iter().rev().find(|word| word.head == name)
     }
 

@@ -14,6 +14,7 @@ pub type Result = std::result::Result<(), Error>;
 pub struct Forth {
     stack: Vec<Value>,
     words: Vec<Word>,
+    last_word: usize,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -26,9 +27,12 @@ pub enum Error {
 
 impl Forth {
     pub fn new() -> Forth {
+        let builtin_words = make_builtin_words();
+
         Self {
             stack: vec![],
-            words: make_builtin_words(),
+            last_word: builtin_words.len(),
+            words: builtin_words,
         }
     }
 
@@ -42,22 +46,20 @@ impl Forth {
         while let Some(token) = tokens.next() {
             match Token::new(&token, &self.words)? {
                 Token::Number(nb) => self.stack.push(nb),
-                Token::Word => match Word::get_copy_with_index(&self.words, &token) {
-                    Some((i, word)) => {
-                        // if word.expanded.is_none() {
-                        //     word.expand()?;
-                        // }
+                Token::Word => {
+                    match Word::get_copy_with_index(&self.words[0..self.last_word], &token) {
+                        Some((i, word)) => {
+                            let original_last = self.last_word;
 
-                        let original_words = self.words.clone();
-                        self.words = self.words[0..i].to_owned();
+                            self.last_word = i;
+                            let result = (word.op)(self, &word.tail);
+                            self.last_word = original_last;
 
-                        let result = (word.op)(self, &word.tail);
-
-                        self.words = original_words;
-                        result?;
+                            result?;
+                        }
+                        None => return Err(Error::UnknownWord),
                     }
-                    None => return Err(Error::UnknownWord),
-                },
+                }
                 Token::WordStart => {
                     let new_word = Word::new(self.get_words(), &mut tokens)?;
                     self.add_word(new_word);
@@ -78,6 +80,7 @@ impl Forth {
 
     fn add_word(&mut self, new_word: Word) {
         self.words.push(new_word);
+        self.last_word += 1;
     }
 
     fn stack_pop(&mut self) -> std::result::Result<Value, Error> {
