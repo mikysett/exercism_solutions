@@ -13,7 +13,7 @@ pub type Result = std::result::Result<(), Error>;
 
 pub struct Forth {
     stack: Vec<Value>,
-    words: HashMap<usize, Word>,
+    words: Vec<Word>,
     words_table: HashMap<String, usize>,
 }
 
@@ -45,19 +45,28 @@ impl Forth {
 
         while let Some(token) = tokens.next() {
             match Token::new(&token, &self.words_table)? {
-                Token::Number(nb) => self.stack.push(nb),
-                Token::Word(id) => {
-                    let word = self.expand_word(id);
-
-                    let exp = word.expanded.unwrap();
-                    (word.op)(self, &exp)?;
-                }
                 Token::WordStart => {
                     let (name, new_word) = Word::new(self.get_words_table(), &mut tokens)?;
                     self.add_word(&name, new_word);
                 }
-                _ => unreachable!(),
+                other => self.exec(other)?,
             }
+        }
+        Ok(())
+    }
+
+    fn exec(&mut self, token: Token) -> Result {
+        match token {
+            Token::Number(nb) => self.stack.push(nb),
+            Token::Word(id) => {
+                let word = self.expand_word(id);
+
+                let exp = word.expanded.unwrap();
+                for token in exp {
+                    (word.op)(self, token)?;
+                }
+            }
+            _ => unreachable!(),
         }
         Ok(())
     }
@@ -78,26 +87,22 @@ impl Forth {
         }
     }
 
-    fn make_expand(&mut self, tail: &[Token]) -> String {
-        let mut result = String::new();
+    fn make_expand(&mut self, tail: &[Token]) -> Vec<Token> {
+        let mut result = vec![];
 
         for token in tail {
             match token {
-                Token::Number(nb) => {
-                    result.push(' ');
-                    result.push_str(&nb.to_string());
-                }
                 Token::Word(id) => {
                     let word = self.get_word(*id).unwrap().clone();
 
-                    let expanded = word
+                    let mut expanded = word
                         .expanded
-                        .unwrap_or(self.expand_word(*id).expanded.unwrap());
+                        .unwrap_or(self.expand_word(*id).expanded.unwrap())
+                        .clone();
 
-                    result.push(' ');
-                    result.push_str(&expanded);
+                    result.append(&mut expanded);
                 }
-                _ => unreachable!(),
+                other => result.push(other.clone()),
             }
         }
 
@@ -116,11 +121,11 @@ impl Forth {
     }
 
     pub fn get_word(&mut self, id: usize) -> Option<&Word> {
-        self.words.get(&id)
+        self.words.get(id)
     }
 
     pub fn get_mut_word(&mut self, id: usize) -> Option<&mut Word> {
-        self.words.get_mut(&id)
+        self.words.get_mut(id)
     }
 
     fn stack_pop(&mut self) -> std::result::Result<Value, Error> {

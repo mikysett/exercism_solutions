@@ -5,20 +5,20 @@ use crate::Forth;
 use crate::Result;
 use crate::Token;
 
-pub type WordOp = fn(&'_ mut Forth, &str) -> Result;
+pub type WordOp = fn(&'_ mut Forth, Token) -> Result;
 
 #[derive(Clone)]
 pub struct Word {
     pub tail: Vec<Token>,
     pub op: WordOp,
-    pub expanded: Option<String>,
+    pub expanded: Option<Vec<Token>>,
 }
 
 impl Word {
-    pub fn new_std(name: &str, op: WordOp) -> Self {
+    pub fn new_std(id: usize, op: WordOp) -> Self {
         Self {
             tail: vec![],
-            expanded: Some(name.to_owned()),
+            expanded: Some(vec![Token::Word(id)]),
             op,
         }
     }
@@ -42,7 +42,7 @@ impl Word {
                         head,
                         Self {
                             tail,
-                            op: Forth::eval,
+                            op: Forth::exec,
                             expanded: None,
                         },
                     ));

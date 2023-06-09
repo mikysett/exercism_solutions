@@ -4,7 +4,7 @@ use crate::Error;
 use crate::Value;
 use crate::Word;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Token {
     Number(Value),
     WordStart,
