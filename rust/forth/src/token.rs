@@ -1,19 +1,18 @@
-use std::collections::HashMap;
-
+use crate::word::WordCallback;
 use crate::Error;
+use crate::Forth;
 use crate::Value;
-use crate::Word;
 
-#[derive(Debug, Clone)]
 pub enum Token {
     Number(Value),
     WordStart,
-    Word(usize),
+    Call(usize),
+    BuiltinCall(WordCallback),
     WordEnd,
 }
 
 impl Token {
-    pub fn new(s: &str, words_table: &HashMap<String, usize>) -> std::result::Result<Self, Error> {
+    pub fn new(s: &str, forth: &Forth) -> std::result::Result<Self, Error> {
         if let Ok(nb) = s.parse::<Value>() {
             Ok(Token::Number(nb))
         } else if s == ":" {
@@ -21,10 +20,10 @@ impl Token {
         } else if s == ";" {
             Ok(Token::WordEnd)
         } else {
-            match Word::get_id(words_table, s) {
-                Some(id) => Ok(Token::Word(*id)),
-                None => Err(Error::UnknownWord),
-            }
+            forth
+                .get_word_id(s)
+                .map(Token::Call)
+                .ok_or(Error::UnknownWord)
         }
     }
 }

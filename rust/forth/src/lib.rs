@@ -4,12 +4,23 @@ mod builtin;
 mod token;
 mod word;
 
-use builtin::make_builtin_words;
+use crate::word::WordCallback;
 use token::Token;
 use word::Word;
 
 pub type Value = i32;
 pub type Result = std::result::Result<(), Error>;
+
+const BUILTIN_OPS: [(&str, WordCallback); 8] = [
+    ("+", builtin::do_add),
+    ("-", builtin::do_sub),
+    ("*", builtin::do_mult),
+    ("/", builtin::do_div),
+    ("DUP", builtin::do_dup),
+    ("DROP", builtin::do_drop),
+    ("SWAP", builtin::do_swap),
+    ("OVER", builtin::do_over),
+];
 
 pub struct Forth {
     stack: Vec<Value>,
@@ -27,13 +38,17 @@ pub enum Error {
 
 impl Forth {
     pub fn new() -> Forth {
-        let (words, words_table) = make_builtin_words();
-
-        Self {
+        let mut forth = Self {
             stack: vec![],
-            words,
-            words_table,
+            words: vec![],
+            words_table: HashMap::new(),
+        };
+
+        for (name, callback) in BUILTIN_OPS {
+            forth.add_word(name.to_string(), Word::new_std(callback));
         }
+
+        forth
     }
 
     pub fn stack(&self) -> &[Value] {
@@ -44,101 +59,51 @@ impl Forth {
         let mut tokens = input.split_whitespace().map(|el| el.to_uppercase());
 
         while let Some(token) = tokens.next() {
-            match Token::new(&token, &self.words_table)? {
+            match Token::new(&token, self)? {
                 Token::WordStart => {
-                    let (name, new_word) = Word::new(self.get_words_table(), &mut tokens)?;
-                    self.add_word(&name, new_word);
+                    let (name, new_word) = Word::new(self, &mut tokens)?;
+                    self.add_word(name, new_word);
                 }
-                other => self.exec(other)?,
+                other => Self::exec(&mut self.stack, &self.words, &other)?,
             }
         }
         Ok(())
     }
 
-    fn exec(&mut self, token: Token) -> Result {
+    fn exec(stack: &mut Vec<Value>, words: &[Word], token: &Token) -> Result {
         match token {
-            Token::Number(nb) => self.stack.push(nb),
-            Token::Word(id) => {
-                let word = self.expand_word(id);
-
-                let exp = word.expanded.unwrap();
-                for token in exp {
-                    (word.op)(self, token)?;
+            Token::Number(nb) => stack.push(*nb),
+            Token::Call(id) => {
+                for token in Forth::get_word(words, *id).unwrap().iter() {
+                    Self::exec(stack, words, token)?;
                 }
+            }
+            Token::BuiltinCall(callback) => {
+                (callback)(stack)?;
             }
             _ => unreachable!(),
         }
         Ok(())
     }
 
-    fn expand_word(&mut self, id: usize) -> Word {
-        let word = self.get_word(id).unwrap().clone();
-
-        match word.expanded.is_some() {
-            true => word,
-            false => {
-                let expand = self.make_expand(&word.tail);
-
-                let word = self.get_mut_word(id).unwrap();
-                word.expanded = Some(expand);
-
-                word.clone()
-            }
-        }
+    fn get_word_id(&self, name: &str) -> Option<usize> {
+        self.words_table.get(name).copied()
     }
 
-    fn make_expand(&mut self, tail: &[Token]) -> Vec<Token> {
-        let mut result = vec![];
-
-        for token in tail {
-            match token {
-                Token::Word(id) => {
-                    let word = self.get_word(*id).unwrap().clone();
-
-                    let mut expanded = word
-                        .expanded
-                        .unwrap_or(self.expand_word(*id).expanded.unwrap())
-                        .clone();
-
-                    result.append(&mut expanded);
-                }
-                other => result.push(other.clone()),
-            }
-        }
-
-        result
+    fn add_word(&mut self, name: String, new_word: Word) {
+        self.words_table.insert(name, self.words.len());
+        self.words.push(new_word);
     }
 
-    fn get_words_table(&self) -> &HashMap<String, usize> {
-        &self.words_table
+    fn get_word(words: &[Word], id: usize) -> Option<&Word> {
+        words.get(id)
     }
 
-    fn add_word(&mut self, name: &str, new_word: Word) {
-        let id = self.words.len();
-
-        self.words_table.insert(name.to_owned(), id);
-        self.words.insert(id, new_word);
+    fn stack_pop(stack: &mut Vec<Value>) -> std::result::Result<Value, Error> {
+        stack.pop().ok_or(Error::StackUnderflow)
     }
 
-    pub fn get_word(&mut self, id: usize) -> Option<&Word> {
-        self.words.get(id)
-    }
-
-    pub fn get_mut_word(&mut self, id: usize) -> Option<&mut Word> {
-        self.words.get_mut(id)
-    }
-
-    fn stack_pop(&mut self) -> std::result::Result<Value, Error> {
-        match self.stack.pop() {
-            Some(el) => Ok(el),
-            None => Err(Error::StackUnderflow),
-        }
-    }
-
-    fn stack_last(&mut self) -> std::result::Result<Value, Error> {
-        match self.stack.last() {
-            Some(el) => Ok(*el),
-            None => Err(Error::StackUnderflow),
-        }
+    fn stack_last(stack: &[Value]) -> std::result::Result<Value, Error> {
+        stack.last().ok_or(Error::StackUnderflow).copied()
     }
 }
