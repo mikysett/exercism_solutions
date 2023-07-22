@@ -28,8 +28,8 @@ export function preparationTime(layers, timePerLayer = 2) {
 
 export function quantities(layers) {
   return {
-    noodles: layers.filter((layer) => layer === "noodles").length * 50,
-    sauce: layers.filter((layer) => layer === "sauce").length * 0.2,
+    noodles: layers.filter(layer => layer === "noodles").length * 50,
+    sauce: layers.filter(layer => layer === "sauce").length * 0.2,
   };
 }
 
@@ -40,7 +40,7 @@ export function addSecretIngredient(friendList, myList) {
 export function scaleRecipe(originalRecipe, portions) {
   let newRecipe = {};
 
-  for (let ingredient in originalRecipe) {
+  for (const ingredient in originalRecipe) {
     newRecipe[ingredient] = (originalRecipe[ingredient] / 2) * portions;
   }
   return newRecipe;
