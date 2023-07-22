@@ -29,7 +29,7 @@ export function luckyNumber(value) {
  * @returns {string} error message
  */
 export function errorMessage(input) {
-  if (input === undefined || input === null || input === "") {
+  if (!input) {
     return "Required field";
   } else if (Number(input) == 0 || !Number(input)) {
     return "Must be a number besides 0";
