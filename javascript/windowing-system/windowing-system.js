@@ -37,30 +37,34 @@ export class ProgramWindow {
     newSize.width = newSize.width < 1 ? 1 : newSize.width;
     newSize.height = newSize.height < 1 ? 1 : newSize.height;
 
-    this.size.width =
+    const newWidth =
       this.position.x + newSize.width > this.screenSize.width
         ? this.screenSize.width - this.position.x
         : newSize.width;
 
-    this.size.height =
+    const newHeight =
       this.position.y + newSize.height > this.screenSize.height
         ? this.screenSize.height - this.position.y
-        : (this.size.height = newSize.height);
+        : newSize.height;
+
+    this.size.resize(newWidth, newHeight);
   }
 
   move(newPosition) {
     newPosition.x = newPosition.x < 0 ? 0 : newPosition.x;
     newPosition.y = newPosition.y < 0 ? 0 : newPosition.y;
 
-    this.position.x =
+    const newX =
       newPosition.x + this.size.width > this.screenSize.width
         ? this.screenSize.width - this.size.width
         : newPosition.x;
 
-    this.position.y =
+    const newY =
       newPosition.y + this.size.height > this.screenSize.height
         ? this.screenSize.height - this.size.height
         : newPosition.y;
+
+    this.position.move(newX, newY);
   }
 }
 
