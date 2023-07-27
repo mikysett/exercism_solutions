@@ -19,17 +19,28 @@ export function seeingDouble(deck) {
  * @returns {number[]} deck with triplicate 3s
  */
 export function threeOfEachThree(deck) {
-  let lastIndex = deck.findIndex((v) => v == 3);
-  let currIndex = lastIndex;
+  // let lastIndex = deck.findIndex((v) => v == 3);
+  // let currIndex = lastIndex;
 
-  while (currIndex != -1) {
-    currIndex += lastIndex;
-    deck.splice(currIndex, 0, 3, 3);
+  // while (currIndex != -1) {
+  //   currIndex += lastIndex;
+  //   deck.splice(currIndex, 0, 3, 3);
 
-    lastIndex = currIndex + 3;
-    currIndex = deck.slice(lastIndex).findIndex((v) => v == 3);
-  }
-  return deck;
+  //   lastIndex = currIndex + 3;
+  //   currIndex = deck.slice(lastIndex).findIndex((v) => v == 3);
+  // }
+  // return deck;
+
+  // More concise solution
+  // return deck.flatMap(card => card == 3 ? [3, 3, 3] : [card])
+
+  return deck.reduce((res, card) => {
+    res.push(card)
+    if (card == 3) {
+      res.push(3, 3)
+    }
+    return res
+  }, [])
 }
 
 /**
@@ -53,12 +64,8 @@ export function middleTwo(deck) {
  */
 
 export function sandwichTrick(deck) {
-  if (deck.length < 2) {
-    return deck;
-  }
-
-  const first = deck.shift() ?? 0;
-  const last = deck.pop() ?? 0;
+  const first = deck.shift()
+  const last = deck.pop()
 
   deck.splice(deck.length / 2, 0, last, first);
   return deck;
