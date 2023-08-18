@@ -11,9 +11,9 @@
  */
 export function createVisitor(name, age, ticketId) {
   return {
-    name: name,
-    age: age,
-    ticketId: ticketId,
+    name,
+    age,
+    ticketId,
   };
 }
 
@@ -24,8 +24,8 @@ export function createVisitor(name, age, ticketId) {
  * @returns {Visitor} the visitor without a ticket
  */
 export function revokeTicket(visitor) {
-  visitor.ticketId = null
-  return visitor
+  visitor.ticketId = null;
+  return visitor;
 }
 
 /**
@@ -37,11 +37,11 @@ export function revokeTicket(visitor) {
  */
 export function ticketStatus(tickets, ticketId) {
   if (tickets[ticketId] === undefined) {
-    return 'unknown ticket id'
+    return "unknown ticket id";
   } else if (tickets[ticketId] === null) {
-    return 'not sold'
+    return "not sold";
   } else {
-    return 'sold to ' + tickets[ticketId]
+    return "sold to " + tickets[ticketId];
   }
 }
 
@@ -54,7 +54,7 @@ export function ticketStatus(tickets, ticketId) {
  * @returns {string} ticket status
  */
 export function simpleTicketStatus(tickets, ticketId) {
-  return tickets[ticketId] ?? 'invalid ticket !!!'
+  return tickets[ticketId] ?? "invalid ticket !!!";
 }
 
 /**
@@ -64,5 +64,5 @@ export function simpleTicketStatus(tickets, ticketId) {
  * @returns {string | undefined} version
  */
 export function gtcVersion(visitor) {
-  return visitor?.gtc?.version
+  return visitor?.gtc?.version;
 }

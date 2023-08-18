@@ -8,8 +8,8 @@
  */
 
 export function isValidCommand(command) {
-  const regex = /^chatbot/i
-  return regex.test(command)
+  const regex = /^chatbot/i;
+  return regex.test(command);
 }
 
 /**
@@ -19,8 +19,8 @@ export function isValidCommand(command) {
  * @returns {string} The message without the emojis encryption
  */
 export function removeEmoji(message) {
-  const regex = RegExp('emoji[0-9]*', 'gi')
-  return message.replace(regex, '')
+  const regex = RegExp("emoji[0-9]*", "gi");
+  return message.replace(regex, "");
 }
 
 /**
@@ -30,12 +30,12 @@ export function removeEmoji(message) {
  * @returns {string} the Chatbot response to the phone Validation
  */
 export function checkPhoneNumber(number) {
-  const regex = /^\(\+[0-9]{2}\) ([0-9]{3})-([0-9]{3})-([0-9]{3})$/
+  const regex = /^\(\+[0-9]{2}\) ([0-9]{3})-([0-9]{3})-([0-9]{3})$/;
 
   if (regex.test(number)) {
-    return "Thanks! You can now download me to your phone."
+    return "Thanks! You can now download me to your phone.";
   } else {
-    return `Oops, it seems like I can't reach out to ${number}`
+    return `Oops, it seems like I can't reach out to ${number}`;
   }
 }
 
@@ -46,8 +46,8 @@ export function checkPhoneNumber(number) {
  * @returns {string[] | null} all the possible URL's that the user may have answered
  */
 export function getURL(userInput) {
-  const regex = /[\w]+\.[a-z]+/gi
-  return userInput.match(regex)
+  const regex = /[\w]+\.[a-z]+/gi;
+  return userInput.match(regex);
 }
 
 /**
@@ -57,11 +57,11 @@ export function getURL(userInput) {
  * @returns {string} Greeting from the chatbot
  */
 export function niceToMeetYou(fullName) {
-  const regex = /^(\w+), (\w+)$/i
-  const matches = fullName.match(regex)
+  const regex = /^(\w+), (\w+)$/i;
+  const matches = fullName.match(regex);
   if (matches !== null) {
-    return `Nice to meet you, ${matches[2]} ${matches[1]}`
+    return `Nice to meet you, ${matches[2]} ${matches[1]}`;
   } else {
-    'Invalid full name'
+    ("Invalid full name");
   }
 }
