@@ -71,15 +71,10 @@ where
 /// convenience function: return a Fizzy which applies the standard fizz-buzz rules
 pub fn fizz_buzz<T>() -> Fizzy<T>
 where
-    T: Rem<Output = T> + ToString + Copy + PartialEq + Default + From<u8>,
+    T: Rem<Output = T> + ToString + Copy + PartialEq + Default,
+    u8: Into<T>,
 {
-    let fizzy = Fizzy::<T>::new();
-    let fizzy = fizzy.add_matcher(Matcher::new(
-        |nb: T| nb % T::from(3) == T::default(),
-        "fizz".to_string(),
-    ));
-    fizzy.add_matcher(Matcher::new(
-        |nb: T| nb % T::from(5) == T::default(),
-        "buzz".to_string(),
-    ))
+    Fizzy::new()
+        .add_matcher(Matcher::new(|nb: T| nb % 3.into() == 0.into(), "fizz"))
+        .add_matcher(Matcher::new(|nb: T| nb % 5.into() == 0.into(), "buzz"))
 }
