@@ -1,13 +1,25 @@
 // the PhantomData instances in this file are just to stop compiler complaints
 // about missing generics; feel free to remove them
 
+use core::ops::Rem;
+
 /// A Matcher is a single rule of fizzbuzz: given a function on T, should
 /// a word be substituted in? If yes, which word?
-pub struct Matcher<T>(std::marker::PhantomData<T>);
+pub struct Matcher<T> {
+    matcher: Box<dyn Fn(T) -> bool>,
+    sub: String,
+}
 
 impl<T> Matcher<T> {
-    pub fn new<F, S>(_matcher: F, _subs: S) -> Matcher<T> {
-        unimplemented!()
+    pub fn new<F, S>(_matcher: F, _subs: S) -> Matcher<T>
+    where
+        F: Fn(T) -> bool + 'static,
+        S: ToString,
+    {
+        Self {
+            matcher: Box::new(_matcher),
+            sub: _subs.to_string(),
+        }
     }
 }
 
@@ -20,28 +32,54 @@ impl<T> Matcher<T> {
 /// here because it's a simpler interface for students to implement.
 ///
 /// Also, it's a good excuse to try out using impl trait.
-pub struct Fizzy<T>(std::marker::PhantomData<T>);
+pub struct Fizzy<T>(Vec<Matcher<T>>);
 
-impl<T> Fizzy<T> {
+impl<T> Fizzy<T>
+where
+    T: ToString + Copy,
+{
     pub fn new() -> Self {
-        unimplemented!()
+        Self(vec![])
     }
 
     // feel free to change the signature to `mut self` if you like
     #[must_use]
-    pub fn add_matcher(self, _matcher: Matcher<T>) -> Self {
-        unimplemented!()
+    pub fn add_matcher(mut self, _matcher: Matcher<T>) -> Self {
+        self.0.push(_matcher);
+        self
     }
 
     /// map this fizzy onto every element of an iterator, returning a new iterator
-    pub fn apply<I>(self, _iter: I) -> impl Iterator<Item = String> {
-        // unimplemented!() doesn't actually work, here; () is not an Iterator
-        // that said, this is probably not the actual implementation you desire
-        Vec::new().into_iter()
+    pub fn apply<I>(self, iter: I) -> impl Iterator<Item = String>
+    where
+        I: Iterator<Item = T>,
+    {
+        iter.map(move |el| {
+            match self
+                .0
+                .iter()
+                .filter_map(|m| (m.matcher)(el).then_some(m.sub.to_string()))
+                .collect::<String>()
+            {
+                matched if !matched.is_empty() => matched,
+                _ => el.to_string(),
+            }
+        })
     }
 }
 
 /// convenience function: return a Fizzy which applies the standard fizz-buzz rules
-pub fn fizz_buzz<T>() -> Fizzy<T> {
-    unimplemented!()
+pub fn fizz_buzz<T>() -> Fizzy<T>
+where
+    T: Rem<Output = T> + ToString + Copy + PartialEq + Default + From<u8>,
+{
+    let fizzy = Fizzy::<T>::new();
+    let fizzy = fizzy.add_matcher(Matcher::new(
+        |nb: T| nb % T::from(3) == T::default(),
+        "fizz".to_string(),
+    ));
+    fizzy.add_matcher(Matcher::new(
+        |nb: T| nb % T::from(5) == T::default(),
+        "buzz".to_string(),
+    ))
 }
