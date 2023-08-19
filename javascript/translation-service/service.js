@@ -30,7 +30,6 @@ export class TranslationService {
   free(text) {
     return this.api.fetch(text)
       .then((res) => res.translation)
-      .catch((err) => { throw err })
   }
 
   /**
@@ -62,27 +61,16 @@ export class TranslationService {
 
 
   request(text) {
-    return new Promise((resolve, reject) => {
-      this.api.request(text, (err) => {
-        if (err === undefined) { resolve() }
-        else {
-          this.api.request(text, (err) => {
-            if (err === undefined) { resolve() }
-            else {
-              this.api.request(text, (err) => {
-                if (err === undefined) {
-                  resolve()
-                }
-                reject(err)
-              })
-            }
-          })
-        }
+    const improvedRequest = () => new Promise((resolve, reject) => {
+      this.api.request(text, (result) => {
+        result ? reject(result) : resolve()
       })
     })
+
+    return improvedRequest()
+      .catch(improvedRequest)
+      .catch(improvedRequest)
   }
-
-
 
   /**
    * Retrieves the translation for the given text
@@ -95,31 +83,14 @@ export class TranslationService {
    * @returns {Promise<string>}
    */
   premium(text, minimumQuality) {
-    return new Promise((resolve, reject) => {
-      this.api.fetch(text)
-        .then(({ translation, quality }) => {
-          if (quality < minimumQuality) {
-            reject(new QualityThresholdNotMet('Quality too low'))
-          }
-          resolve(translation)
-        })
-        .catch(_ => {
-          this.api.request(text, err => {
-            if (err == undefined) {
-              this.api.fetch(text)
-                .then(({ translation, quality }) => {
-                  if (quality < minimumQuality) {
-                    reject(new QualityThresholdNotMet('Quality too low'))
-                  }
-                  resolve(translation)
-                })
-            } else {
-              reject(err)
-            }
-          })
-        })
-        .catch(err => reject(err))
-    })
+    return this.api.fetch(text)
+      .catch(() => this.request(text).then(() => this.api.fetch(text)))
+      .then(({ translation, quality }) => {
+        if (quality < minimumQuality) {
+          throw new QualityThresholdNotMet('Quality too low')
+        }
+        return translation
+      })
   }
 }
 
