@@ -1,16 +1,13 @@
 pub fn reply(message: &str) -> &str {
-    let message = message.trim();
-    let is_question = || message.chars().last().unwrap_or(' ') == '?';
+    let m = message.trim();
     let is_yelling = || {
-        message.chars().any(|c| c.is_alphabetic())
-            && message
-                .chars()
+        m.chars().any(|c| c.is_alphabetic())
+            && m.chars()
                 .filter(|c| c.is_alphabetic())
                 .all(|c| c.is_uppercase())
     };
-    let is_silence = || message.is_empty();
 
-    match (is_question(), is_yelling(), is_silence()) {
+    match (m.ends_with('?'), is_yelling(), m.is_empty()) {
         (_, _, true) => "Fine. Be that way!",
         (true, true, _) => "Calm down, I know what I'm doing!",
         (true, false, _) => "Sure.",
