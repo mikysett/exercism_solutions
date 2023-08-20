@@ -16,7 +16,7 @@ pub fn nth(n: u32) -> u32 {
 }
 
 fn is_prime(primes: &[u32], nb: u32) -> bool {
-    let cap = nb / 2; // This could be improved
+    let cap = (nb as f64).sqrt() as u32;
 
     for &prime in primes {
         if prime > cap {
