@@ -1,24 +1,13 @@
+use std::iter::once;
+
 pub fn abbreviate(phrase: &str) -> String {
-    let mut last_char = ' ';
-
-    phrase
-        .chars()
-        .filter_map(|c| {
-            let acronym = if c.is_alphabetic() {
-                match last_char {
-                    _ if [' ', '-', '_'].contains(&last_char)
-                        || (last_char.is_lowercase() && c.is_uppercase()) =>
-                    {
-                        Some(c.to_ascii_uppercase())
-                    }
-                    _ => None,
-                }
-            } else {
-                None
-            };
-            last_char = c;
-
-            acronym
+    once(' ')
+        .chain(phrase.chars())
+        .zip(phrase.chars())
+        .filter(|&(prev, cur)| {
+            " -_".contains(prev) && cur.is_alphabetic()
+                || prev.is_lowercase() && cur.is_uppercase()
         })
+        .map(|(_, cur)| cur.to_ascii_uppercase())
         .collect()
 }
