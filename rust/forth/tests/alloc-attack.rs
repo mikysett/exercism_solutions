@@ -11,7 +11,7 @@
 use forth::Forth;
 
 #[test]
-#[ignore]
+// #[ignore]
 fn alloc_attack() {
     let mut f = Forth::new();
     f.eval(": a 0 drop ;").unwrap();
@@ -59,6 +59,7 @@ fn alloc_attack() {
     // allocated memory is substantially less than expected from a naive solution.
     //
     // A megabyte seems like a reasonable number to use.
+    println!("{}", GLOBAL_ALLOCATOR.get_bytes_allocated());
     assert!(GLOBAL_ALLOCATOR.get_bytes_allocated() < 1024 * 1024);
 }
 

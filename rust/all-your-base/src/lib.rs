@@ -56,17 +56,9 @@ pub fn convert(number: &[u32], from_base: u32, to_base: u32) -> Result<Vec<u32>,
     }
 
     let mut res = vec![];
-    let mut base_position = 1;
-    loop {
-        let cur_base = to_base.pow(base_position);
-        let digit = nb_base_10 % cur_base;
-        
-        res.push(digit / to_base.pow(base_position - 1));
-        
-        base_position += 1;
-        if cur_base > nb_base_10 {
-            break;
-        }
+    while nb_base_10 > 0 {
+        res.push(nb_base_10 % to_base);
+        nb_base_10 /= to_base;
     }
 
     res.reverse();

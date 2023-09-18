@@ -164,7 +164,7 @@ fn swap_with_three() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn swap_case_insensitive() {
     let mut f = Forth::new();
     assert!(f.eval("1 2 SWAP 3 Swap 4 swap").is_ok());
@@ -209,7 +209,7 @@ fn over_error() {
 // User-defined words
 
 #[test]
-#[ignore]
+// #[ignore]
 fn can_consist_of_built_in_words() {
     let mut f = Forth::new();
     assert!(f.eval(": dup-twice dup dup ;").is_ok());
@@ -218,7 +218,7 @@ fn can_consist_of_built_in_words() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn execute_in_the_right_order() {
     let mut f = Forth::new();
     assert!(f.eval(": countup 1 2 3 ;").is_ok());
@@ -227,7 +227,7 @@ fn execute_in_the_right_order() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn redefining_an_existing_word() {
     let mut f = Forth::new();
     assert!(f.eval(": foo dup ;").is_ok());
@@ -237,7 +237,7 @@ fn redefining_an_existing_word() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn redefining_an_existing_built_in_word() {
     let mut f = Forth::new();
     assert!(f.eval(": swap dup ;").is_ok());
@@ -246,7 +246,7 @@ fn redefining_an_existing_built_in_word() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn user_defined_words_are_case_insensitive() {
     let mut f = Forth::new();
     assert!(f.eval(": foo dup ;").is_ok());
@@ -255,7 +255,7 @@ fn user_defined_words_are_case_insensitive() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn definitions_are_case_insensitive() {
     let mut f = Forth::new();
     assert!(f.eval(": SWAP DUP Dup dup ;").is_ok());
@@ -264,7 +264,7 @@ fn definitions_are_case_insensitive() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn redefining_a_built_in_operator() {
     let mut f = Forth::new();
     assert!(f.eval(": + * ;").is_ok());
@@ -273,7 +273,7 @@ fn redefining_a_built_in_operator() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn can_use_different_words_with_the_same_name() {
     let mut f = Forth::new();
     assert!(f.eval(": foo 5 ;").is_ok());
@@ -284,7 +284,7 @@ fn can_use_different_words_with_the_same_name() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn can_define_word_that_uses_word_with_the_same_name() {
     let mut f = Forth::new();
     assert!(f.eval(": foo 10 ;").is_ok());
@@ -294,14 +294,14 @@ fn can_define_word_that_uses_word_with_the_same_name() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn defining_a_number() {
     let mut f = Forth::new();
     assert_eq!(Err(Error::InvalidWord), f.eval(": 1 2 ;"));
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn malformed_word_definition() {
     let mut f = Forth::new();
     assert_eq!(Err(Error::InvalidWord), f.eval(":"));
@@ -310,14 +310,14 @@ fn malformed_word_definition() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn calling_non_existing_word() {
     let mut f = Forth::new();
     assert_eq!(Err(Error::UnknownWord), f.eval("1 foo"));
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn multiple_definitions() {
     let mut f = Forth::new();
     assert!(f.eval(": one 1 ; : two 2 ; one two +").is_ok());
@@ -325,7 +325,7 @@ fn multiple_definitions() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn definitions_after_ops() {
     let mut f = Forth::new();
     assert!(f.eval("1 2 + : addone 1 + ; addone").is_ok());
@@ -333,7 +333,7 @@ fn definitions_after_ops() {
 }
 
 #[test]
-#[ignore]
+// #[ignore]
 fn redefine_an_existing_word_with_another_existing_word() {
     let mut f = Forth::new();
     assert!(f.eval(": foo 5 ;").is_ok());
@@ -342,4 +342,46 @@ fn redefine_an_existing_word_with_another_existing_word() {
     assert!(f.eval(": bar foo ;").is_ok());
     assert!(f.eval("bar foo").is_ok());
     assert_eq!(vec![6, 6], f.stack());
+}
+
+#[test]
+// #[ignore]
+// redefine_a_word_already_used_in_another
+fn made_by_mikysett() {
+    let mut f = Forth::new();
+    assert!(f.eval(": foo 5 ;").is_ok());
+    assert!(f.eval(": bar foo ;").is_ok());
+    assert!(f.eval(": foo 6 ;").is_ok());
+    assert!(f.eval(": bar foo ;").is_ok());
+    assert!(f.eval(": foo 7 ;").is_ok());
+    assert!(f.eval("bar foo").is_ok());
+    assert!(f.eval("bar foo").is_ok());
+    assert!(f.eval("bar").is_ok());
+    assert_eq!(vec![6, 7, 6, 7, 6], f.stack());
+}
+
+#[test]
+fn test_performance() {
+    let mut f = Forth::new();
+
+    f.eval(": a 0 drop ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval(": a a a ;").unwrap();
+    f.eval("a").unwrap();
 }
