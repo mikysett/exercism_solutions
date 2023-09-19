@@ -8,7 +8,6 @@ pub struct BowlingGame {
     rolls: Vec<u16>,
     pins_left: u16,
     rolls_in_frame: u16,
-    frames_count: u16,
     fill_balls: u16,
 }
 
@@ -18,7 +17,6 @@ impl BowlingGame {
             rolls: vec![],
             pins_left: 10,
             rolls_in_frame: 2,
-            frames_count: 1,
             fill_balls: 0,
         }
     }
@@ -26,7 +24,7 @@ impl BowlingGame {
     pub fn roll(&mut self, pins: u16) -> Result<(), Error> {
         if pins > self.pins_left {
             return Err(Error::NotEnoughPinsLeft);
-        } else if self.frames_count >= 11 && self.fill_balls == 0 {
+        } else if self.rolls.len() >= 20 && self.fill_balls == 0 {
             return Err(Error::GameComplete);
         }
         self.pins_left -= pins;
@@ -43,7 +41,6 @@ impl BowlingGame {
         if self.rolls_in_frame == 1 {
             self.pins_left = 10;
             self.rolls_in_frame = 2;
-            self.frames_count += 1;
         } else {
             self.rolls_in_frame -= 1;
         }
@@ -52,20 +49,20 @@ impl BowlingGame {
     }
 
     fn strike_or_spare(&mut self, pins: u16) {
-        if self.frames_count == 10 {
+        if self.rolls_in_frame == 2 {
+            self.rolls_in_frame -= 1;
+            self.rolls.push(0);
+        }
+        if self.rolls.len() == 20 {
             match pins {
                 10 => self.fill_balls = 2,
                 _ => self.fill_balls = 1,
             }
         }
-        if self.rolls_in_frame == 2 {
-            self.rolls_in_frame -= 1;
-            self.rolls.push(0);
-        }
     }
 
     pub fn score(&self) -> Option<u16> {
-        if self.frames_count < 11 || self.fill_balls != 0 {
+        if self.rolls.len() < 20 || self.fill_balls != 0 {
             return None;
         }
         let cur_frame = self.rolls.chunks(2);
