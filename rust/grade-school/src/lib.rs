@@ -19,13 +19,10 @@ impl School {
     }
 
     pub fn add(&mut self, grade: u32, student: &str) {
-        match self.students_in_grade.get_mut(&grade) {
-            Some(grade) => grade.push(student.to_string()),
-            None => {
-                self.students_in_grade
-                    .insert(grade, vec![student.to_string()]);
-            }
-        }
+        self.students_in_grade
+            .entry(grade)
+            .and_modify(|grade| grade.push(student.to_string()))
+            .or_insert(vec![student.to_string()]);
     }
 
     pub fn grades(&self) -> Vec<u32> {
