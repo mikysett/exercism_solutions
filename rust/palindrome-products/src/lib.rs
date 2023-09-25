@@ -11,8 +11,14 @@ impl Palindrome {
         if value % 2 == 0 && value % 11 != 0 {
             return None;
         }
-        (value.to_string() == value.to_string().chars().rev().collect::<String>())
-            .then_some(Self(value))
+
+        let mut reversed = 0;
+        let mut digits_to_reverse = value;
+        while digits_to_reverse > 0 {
+            reversed = reversed * 10 + digits_to_reverse % 10;
+            digits_to_reverse /= 10;
+        }
+        (value == reversed).then_some(Self(value))
     }
 
     /// Get the value of this palindrome.
@@ -22,14 +28,13 @@ impl Palindrome {
 }
 
 pub fn palindrome_products(min: u64, max: u64) -> Option<(Palindrome, Palindrome)> {
-    let mut numbers: Vec<Palindrome> = (min..=max)
-        .into_iter()
-        .flat_map(|nb| (nb..=max).into_iter().filter_map(move |nb2| Palindrome::new(nb * nb2)))
-        .collect();
-    numbers.sort_unstable();
-
-    match numbers.is_empty() {
-        true => None,
-        _ => Some((*numbers.first().unwrap(), *numbers.last().unwrap()))
-    }
+    (min..=max)
+        .flat_map(|nb| (nb..=max).map(move |nb2| nb * nb2))
+        .filter_map(Palindrome::new)
+        .fold(None, |acc, p| match acc {
+            Some((min, max)) if p < min => Some((p, max)),
+            Some((min, max)) if p > max => Some((min, p)),
+            None => Some((p, p)),
+            _ => acc,
+        })
 }
