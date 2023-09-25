@@ -1,3 +1,3 @@
 ## Exercism exercises solutions
 
-Little repo to save my solutions for the great learning platform exercism.org.
+Little repo to save my solutions for the great learning platform [exercism.org](https://exercism.org).
