@@ -17,12 +17,5 @@ func AssignTable(name string, table int, neighbor, direction string, distance fl
 	return fmt.Sprintf(`Welcome to my party, %s!
 You have been assigned to table %03d. Your table is %s, exactly %.1f meters from here.
 You will be sitting next to %s.`,
-		name, table, formatDirection(direction), distance, neighbor)
-}
-
-func formatDirection(direction string) string {
-	if direction == "left" || direction == "right" {
-		return "on the " + direction
-	}
-	return direction
+		name, table, direction, distance, neighbor)
 }
