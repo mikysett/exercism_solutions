@@ -10,14 +10,16 @@ func PreparationTime(layers []string, preparationTime int) int {
 
 // TODO: define the 'Quantities()' function
 func Quantities(layers []string) (noodlesGrams int, sauceLiters float64) {
+	countNoodles := 0
+	countSauce := 0
 	for _, layer := range layers {
 		if layer == "noodles" {
-			noodlesGrams += 50
+			countNoodles++
 		} else if layer == "sauce" {
-			sauceLiters += 0.2
+			countSauce++
 		}
 	}
-	return noodlesGrams, sauceLiters
+	return countNoodles * 50, float64(countSauce) * 0.2
 }
 
 // TODO: define the 'AddSecretIngredient()' function
@@ -27,9 +29,10 @@ func AddSecretIngredient(friendsList, myList []string) {
 
 // TODO: define the 'ScaleRecipe()' function
 func ScaleRecipe(quantities []float64, portions int) []float64 {
+	scale := float64(portions) / 2
 	scaledQuantities := make([]float64, 0, len(quantities))
 	for _, quantity := range quantities {
-		scaledQuantities = append(scaledQuantities, quantity*(float64(portions)/2))
+		scaledQuantities = append(scaledQuantities, quantity*scale)
 	}
 	return scaledQuantities
 }
